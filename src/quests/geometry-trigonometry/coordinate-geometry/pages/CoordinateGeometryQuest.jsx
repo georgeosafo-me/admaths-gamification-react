@@ -59,6 +59,8 @@ const CoordinateGeometryQuest = () => {
     }
   }, [aiResponse, aiModalOpen, currentClues, difficulty]);
 
+  // --- ACTIONS ---
+
   const generateNewPuzzle = async () => {
     setIsGenerating(true);
     setAnswers({}); 
@@ -103,6 +105,7 @@ const CoordinateGeometryQuest = () => {
       For Clues: Use "text" for the question (with $math$) and "question" for the concept title.
     `;
 
+    // Note: callGemini will automatically pick up VITE_GEMINI_API_KEY from environment
     const jsonString = await callGemini(prompt, true);
     
     if (jsonString) {

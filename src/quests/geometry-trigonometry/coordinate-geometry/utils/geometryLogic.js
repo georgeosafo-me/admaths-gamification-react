@@ -36,16 +36,17 @@ export const pcmToWav = (base64PCM, sampleRate = 24000) => {
   };
 
 // --- GEMINI API INTEGRATION ---
-export const callGemini = async (prompt, isJson = false) => {
-    const apiKey = ""; // Injected by the environment, or placeholder
-    
+export const callGemini = async (prompt, isJson = false, apiKey = "") => {
+    // Check environment variable as fallback if not passed directly
+    const effectiveKey = apiKey || import.meta.env.VITE_GEMINI_API_KEY;
+
     // If no API key is provided, return mock or null to avoid errors if not configured
-    if (!apiKey) {
+    if (!effectiveKey) {
         console.warn("Gemini API Key is missing.");
         return null;
     }
 
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${effectiveKey}`;
 
     const generationConfig = isJson ? {
         responseMimeType: "application/json"
@@ -92,14 +93,15 @@ export const callGemini = async (prompt, isJson = false) => {
     }
   };
 
-  export const callGeminiTTS = async (text) => {
-    const apiKey = ""; 
+  export const callGeminiTTS = async (text, apiKey = "") => {
+    const effectiveKey = apiKey || import.meta.env.VITE_GEMINI_API_KEY;
+
     // If no API key is provided, return null
-    if (!apiKey) {
+    if (!effectiveKey) {
         return null;
     }
 
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${apiKey}`;
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${effectiveKey}`;
     
     const cleanText = text.replace(/\$/g, '');
 
