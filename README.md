@@ -1,157 +1,68 @@
-PROJECT NAME:
-admath-gamification-react
+# AdMath Gamification React
 
-GITHUB:
-Create and connect the project to a GitHub repository called:
-admath-gamification-react
+A scalable gamified learning platform for SHS Additional Mathematics, structured according to the **GES New Curriculum**. This project uses React (Vite) and Tailwind CSS to create interactive "Quests" for each sub-strand of the curriculum.
 
-TECH STACK:
-- React (Vite)
-- JavaScript (not TypeScript for now)
-- Modern component-based architecture
-- Tailwind CSS (preferred, but modular CSS acceptable)
-- AI-assisted question generation (stub first, real integration later)
+## 🚀 Project Goal
 
-PROJECT GOAL:
-Build a scalable gamified learning platform for SHS Additional Mathematics, structured exactly according to the **GES New Curriculum**, with topics grouped into **four strands**, each having **sub-strands**. Each sub-strand is implemented as an independent “Quest”.
+To build a modular, extensible platform where each mathematical topic is a "Quest". The system is designed to integrate with AI for dynamic question generation (currently using stubs/placeholders).
 
-AI will be used to generate questions dynamically, so the system must be modular and extensible.
+## 📂 Folder Structure
 
---------------------------------------------------
-FOLDER STRUCTURE (MANDATORY)
---------------------------------------------------
+The project follows a strict strand-based hierarchy in `src/quests/`:
 
-Inside `src/quests/`, create the following **strand-based structure**:
+```
+src/quests/
+├── algebra/
+├── geometry-trigonometry/
+│   └── coordinate-geometry/  <-- Reference Implementation
+├── calculus/
+└── statistics-probability/
+```
 
-STRAND 1 — ALGEBRA
-quests/algebra/
-- indices-logs
-- polynomials
-- partial-fractions
-- surds
-- sequences-series
-- binomial
-- complex-numbers
-- matrices
-- determinants
-- vectors
-- linear-programming
+### Adding a New Quest
 
-STRAND 2 — GEOMETRY & TRIGONOMETRY
-quests/geometry-trigonometry/
-- trig-identities
-- radian-measure
-- trig-equations
-- triangle-solutions
-- coordinate-geometry   ← FIRST QUEST TO IMPLEMENT
-- loci
-- circles
-- mensuration
-- vectors-3d
+1.  Create a folder for the sub-strand in `src/quests/<strand>/<sub-strand>/`.
+2.  Follow the internal structure:
+    *   `components/`: Quest-specific UI.
+    *   `data/`: Question templates/data.
+    *   `pages/`: The main page component for the quest.
+    *   `utils/`: Helper logic.
+    *   `index.js`: Export the main component.
+3.  Register the route in `src/App.jsx`.
 
-STRAND 3 — CALCULUS
-quests/calculus/
-- functions
-- limits
-- differentiation
-- diff-applications
-- integration
-- int-applications
+## 🛠 Tech Stack
 
-STRAND 4 — STATISTICS & PROBABILITY
-quests/statistics-probability/
-- permutation-combination
-- probability
-- random-variables
-- distributions
-- measures
+*   **React 19** (Vite)
+*   **Tailwind CSS 3**
+*   **MathJax** (for rendering equations)
+*   **Lucide React** (Icons)
 
---------------------------------------------------
-COORDINATE GEOMETRY QUEST (FIRST IMPLEMENTATION)
---------------------------------------------------
+## 🤖 AI Integration
 
-Inside:
-src/quests/geometry-trigonometry/coordinate-geometry/
+The project is designed to plug in AI for:
+*   Generating crossword puzzles/questions (`utils/geometryLogic.js`).
+*   Providing smart hints.
+*   Text-to-Speech for clues.
 
-Create:
+Currently, it uses placeholder/mock logic or requires an API key for live generation.
 
-components/
-- ChallengeCard.jsx
+## 📦 Installation & Usage
 
-data/
-- questions.js   (sample data only; AI will replace later)
+1.  Clone the repo:
+    ```bash
+    git clone https://github.com/georgeosafo-me/admaths-gamification-react.git
+    ```
+2.  Install dependencies:
+    ```bash
+    npm install
+    ```
+3.  Run development server:
+    ```bash
+    npm run dev
+    ```
 
-pages/
-- CoordinateGeometryQuest.jsx
+## 🚀 Deployment
 
-utils/
-- geometryLogic.js   (AI hook placeholder)
-
-index.js   (export quest)
-
---------------------------------------------------
-FUNCTIONAL REQUIREMENTS (PHASE 1)
---------------------------------------------------
-
-1. The Coordinate Geometry Quest MUST:
-- Render correctly via React Router
-- Display a question card
-- Allow option selection
-- Show basic feedback (correct / incorrect)
-- Move to next question
-
-2. Use simple placeholder questions for now
-3. Prepare clean extension points for:
-- AI question generation
-- Scoring
-- Levels
-- Timed challenges
-- SVG diagrams
-
---------------------------------------------------
-ROUTING
---------------------------------------------------
-
-Register a route such as:
-
-/coordinate-geometry-quest
-
-The quest must load without errors.
-
---------------------------------------------------
-ARCHITECTURAL PRINCIPLES
---------------------------------------------------
-
-- Each sub-strand = independent quest module
-- No hard-coding across quests
-- All logic modular
-- AI hooks isolated in utils or hooks
-- Code must be readable and extendable by other contributors
-
---------------------------------------------------
-DELIVERABLES
---------------------------------------------------
-
-1. A working Vite React project
-2. GitHub repository connected and pushed
-3. Coordinate Geometry Quest loading successfully
-4. Clean commit history
-5. README explaining:
-   - Project purpose
-   - Folder structure
-   - How to add a new quest
-   - Where AI plugs in
-
---------------------------------------------------
-IMPORTANT
---------------------------------------------------
-
-Do NOT:
-- Collapse all geometry into one folder
-- Hard-code curriculum logic
-- Skip routing
-- Use System32 paths or OS-specific hacks
-
-This project is intended to scale to **hundreds of quests**.
-
-Begin by scaffolding the project correctly, then implement Coordinate Geometry Quest as the reference model for all others.
+This project is configured for **GitHub Pages**.
+Pushing to the `master` or `main` branch will trigger a GitHub Action to build and deploy the site to:
+`https://georgeosafo-me.github.io/admaths-gamification-react/`
