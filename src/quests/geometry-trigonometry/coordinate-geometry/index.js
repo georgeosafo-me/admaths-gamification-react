@@ -1,4 +1,4 @@
 // src/quests/geometry-trigonometry/coordinate-geometry/index.js
-import CoordinateGeometryQuest from './pages/CoordinateGeometryQuest';
+import CoordinateGeometryWrapper from './pages/Wrapper';
 
-export default CoordinateGeometryQuest;
+export default CoordinateGeometryWrapper;
