@@ -1,15 +1,15 @@
 {
   "name": "admaths-gamification-react",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.1.0",
   "type": "module",
+  "homepage": "https://georgeosafo-me.github.io/admaths-gamification-react/",
   "scripts": {
     "dev": "vite",
     "build": "vite build && cp dist/index.html dist/404.html",
     "lint": "eslint .",
     "preview": "vite preview"
   },
-   "homepage": "https://georgeosafo-me.github.io/admaths-gamification-react/",
   "dependencies": {
     "autoprefixer": "^10.4.23",
     "clsx": "^2.1.1",

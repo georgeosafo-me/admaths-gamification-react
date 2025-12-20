@@ -23,14 +23,7 @@ const Welcome = () => {
 
   const handleActivitySelect = (activityId) => {
     if (selectedStrand && selectedSubStrand) {
-      // Route format: /quest/:strand/:subStrand/:activityType
-      // Example: /quest/geometry/coordinate-geometry/quest
-      // Note: We need to map the internal IDs to the folder structure we built.
-      // Ideally, the ID in CURRICULUM matches the folder name.
-      
-      // For the prototype, we only have coordinate geometry implemented fully.
       if (selectedSubStrand.id === 'coordinate-geometry') {
-         // Pass the selected activity mode (quest, spin-wheel, puzzle) via query param
          navigate(`/coordinate-geometry-quest?mode=${activityId}`);
       } else {
          alert("This quest is under construction by Jules AI!");
@@ -43,13 +36,24 @@ const Welcome = () => {
       {/* HERO SECTION */}
       <header className="relative overflow-hidden bg-slate-800 border-b border-slate-700">
         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-rose-500 via-emerald-500 to-blue-500"></div>
-        <div className="max-w-6xl mx-auto px-6 py-16 text-center relative z-10">
-          <h1 className="text-5xl md:text-6xl font-extrabold mb-6 tracking-tight">
-            AdMaths <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-blue-500">Fun Learning</span>
-          </h1>
-          <p className="text-xl text-slate-400 max-w-2xl mx-auto mb-8">
-            Master SHS Additional Mathematics through AI-powered quests, puzzles, and interactive challenges.
-          </p>
+        
+        <div className="max-w-6xl mx-auto px-6 py-12 md:py-20 flex flex-col md:flex-row items-center gap-12 relative z-10">
+          <div className="flex-1 text-center md:text-left">
+            <h1 className="text-5xl md:text-6xl font-extrabold mb-6 tracking-tight">
+              AdMaths <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-blue-500">Fun Learning</span>
+            </h1>
+            <p className="text-xl text-slate-400 max-w-xl mx-auto md:mx-0 mb-8 leading-relaxed">
+              Master SHS Additional Mathematics through AI-powered quests, puzzles, and interactive challenges designed for Ghanaian students.
+            </p>
+          </div>
+          
+          <div className="flex-1 w-full max-w-md">
+            <img 
+              src="https://images.unsplash.com/photo-1509062522246-3755977927d7?q=80&w=1000&auto=format&fit=crop" 
+              alt="Students learning with fun" 
+              className="rounded-2xl shadow-2xl border-4 border-slate-700 rotate-2 hover:rotate-0 transition-transform duration-500 w-full object-cover aspect-video"
+            />
+          </div>
         </div>
       </header>
 
@@ -156,11 +160,23 @@ const Welcome = () => {
 
       {/* FOOTER */}
       <footer className="border-t border-slate-800 mt-20 py-12 bg-slate-900">
-        <div className="max-w-6xl mx-auto px-4 text-center">
-          <p className="text-slate-500 mb-4">
-            Powered by <span className="text-indigo-400 font-bold">Jules AI</span> & <span className="text-emerald-400 font-bold">Google Gemini</span>
+        <div className="max-w-6xl mx-auto px-4 flex flex-col items-center gap-4 text-center">
+          <div>
+            <p className="text-slate-300 font-medium mb-1">
+               Designed by <span className="text-emerald-400 font-bold">George Osafo</span>
+            </p>
+            <p className="text-sm text-slate-400">
+               CEO, <span className="text-blue-400">Stemfinite Education Network</span>
+            </p>
+          </div>
+          
+          <div className="h-px w-12 bg-slate-800 my-2"></div>
+
+          <p className="text-xs text-slate-600">
+            Powered by <span className="text-indigo-900/70 font-bold">Jules AI</span> & <span className="text-emerald-900/70 font-bold">Google Gemini</span>
           </p>
-          <div className="flex justify-center gap-6 text-sm text-slate-600">
+          
+          <div className="flex justify-center gap-6 text-xs text-slate-700 mt-4">
             <span>© 2025 AdMaths Fun Learning</span>
             <span>Terms of Service</span>
             <span>Privacy Policy</span>
