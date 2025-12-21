@@ -2,23 +2,20 @@ import { useEffect } from 'react';
 
 const useMathJax = (dependencies = []) => {
   useEffect(() => {
+    // 1. Config MathJax if not already configured
     if (!window.MathJax) {
       window.MathJax = {
         tex: {
-          // Standard delimiters: $...$ for inline, $$...$$ for block
           inlineMath: [['$', '$'], ['\\(', '\\)']],
           displayMath: [['$$', '$$'], ['\\[', '\\]']],
-          processEscapes: true
         },
         svg: {
           fontCache: 'global'
-        },
-        options: {
-          enableMenu: false
         }
       };
     }
 
+    // 2. Load script if not present
     if (!document.getElementById('mathjax-script')) {
       const script = document.createElement('script');
       script.id = 'mathjax-script';
@@ -27,14 +24,12 @@ const useMathJax = (dependencies = []) => {
       document.head.appendChild(script);
     }
 
+    // 3. Typeset whenever dependencies change
     if (window.MathJax && window.MathJax.typesetPromise) {
+      // Small timeout to ensure DOM is ready
       setTimeout(() => {
-        window.MathJax.typesetPromise()
-          .then(() => {
-            // Optional: Force styles if MathJax overrides
-          })
-          .catch((err) => console.log('MathJax typeset failed: ', err));
-      }, 100);
+        window.MathJax.typesetPromise().catch((err) => console.log('MathJax typeset failed: ', err));
+      }, 50);
     }
   }, dependencies);
 };

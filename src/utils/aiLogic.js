@@ -1,6 +1,6 @@
 // src/utils/aiLogic.js
 
-// ... (previous imports and helpers same) ...
+// --- HELPER: PCM to WAV Converter (for TTS) ---
 const pcmToWav = (base64PCM, sampleRate = 24000) => {
     const binaryString = window.atob(base64PCM);
     const len = binaryString.length;
@@ -35,6 +35,7 @@ const pcmToWav = (base64PCM, sampleRate = 24000) => {
     return new Blob([buffer], { type: 'audio/wav' });
 };
 
+// --- CORE GEMINI CALL ---
 export const callGemini = async (prompt, isJson = false, apiKey = "") => {
     const effectiveKey = apiKey || import.meta.env.VITE_GEMINI_API_KEY;
     if (!effectiveKey) {
@@ -59,6 +60,7 @@ export const callGemini = async (prompt, isJson = false, apiKey = "") => {
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         const data = await response.json();
         let text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+        // Clean markdown code blocks if any
         text = text.replace(/^```json/, '').replace(/^```html/, '').replace(/^```/, '').replace(/```$/, '').trim();
         return text;
     } catch (error) {
@@ -72,6 +74,7 @@ export const callGeminiTTS = async (text, apiKey = "") => {
     if (!effectiveKey) return null;
     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${effectiveKey}`;
     
+    // Simple math cleanup for TTS
     const cleanText = text.replace(/\$/g, ''); 
 
     const payload = {
@@ -106,6 +109,12 @@ export const callGeminiTTS = async (text, apiKey = "") => {
 // --- SPECIALIZED PROMPT BUILDERS ---
 
 export const generateSpinWheelQuestion = async (topic, amount) => {
+    // Map amount to Depth of Knowledge (DoK) or difficulty
+    // GHS 1-5: Recall (DoK 1)
+    // GHS 10-20: Skill/Concept (DoK 2)
+    // GHS 50-100: Strategic Thinking (DoK 3)
+    // GHS 200: Extended Thinking (DoK 4)
+    
     let difficulty = "Very Easy (Recall)";
     if (amount >= 10) difficulty = "Medium (Skill application)";
     if (amount >= 50) difficulty = "Hard (Analysis/Problem Solving)";
@@ -113,79 +122,62 @@ export const generateSpinWheelQuestion = async (topic, amount) => {
 
     const prompt = `
       Generate a single high-quality Additional Mathematics question for the topic: "${topic}".
+      
       Difficulty Level: ${difficulty} (Value: GHS ${amount}).
-      Context: Use Ghanaian names and contexts.
-      Use LaTeX $...$ for inline math.
+      Context: Use Ghanaian names (e.g., Kwame, Ama, Kofi) and contexts (e.g., markets, cedi, local geography) where appropriate for word problems.
+      
       Return strictly JSON:
-      { "type": "mcq", "question": "...", "options": [...], "correctAnswer": "...", "explanation": "..." }
+      {
+        "type": "mcq",
+        "question": "Question text here (use LaTeX $...$ for math)",
+        "options": ["Option A", "Option B", "Option C", "Option D"],
+        "correctAnswer": "Option A",
+        "explanation": "Short explanation of the solution"
+      }
     `;
+    
     return callGemini(prompt, true);
 };
 
 export const generateConceptExplanation = async (topic, concept) => {
     const prompt = `
-      Act as a Ghanaian Mathematics Tutor. Explain "${concept}" under "${topic}".
-      Use Scaffolding. Use LaTeX $...$ for inline math.
-      Return valid HTML content.
+      Act as a friendly Ghanaian Mathematics Tutor.
+      Explain the concept of "${concept}" under the topic "${topic}" to a Senior High School student.
+      
+      Guidelines:
+      1. Use a "Scaffolding" approach: Start simple, build up to the formula.
+      2. Use Ghanaian analogies or real-life examples (e.g., trotro routes for vectors, market profits for algebra).
+      3. Format with HTML tags (<h3>, <p>, <ul>, <b>).
+      4. Use LaTeX $...$ for all math expressions.
+      5. Keep it engaging and intuitive.
     `;
     return callGemini(prompt, false);
 };
 
 export const generateExamQuestions = async (topic, count = 5) => {
-    const prompt = `Create mini-exam of ${count} questions for "${topic}". Context: Ghana. Use LaTeX $...$. Return strictly JSON: { "questions": [...] }`;
-    return callGemini(prompt, true);
-};
-
-export const generateRiddle = async (topic) => {
     const prompt = `
-      Create a fun math riddle about "${topic}".
-      Return strictly JSON: { "riddle": "...", "answer": "...", "hint": "..." }
-    `;
-    return callGemini(prompt, true);
-};
-
-export const generateRearrange = async (topic) => {
-    const prompt = `
-      Create a 'Rearrange the Steps' problem for solving a standard problem in "${topic}".
-      Return strictly JSON: { 
-        "problem": "Solve for x...", 
-        "steps": [
-           { "id": 1, "text": "Step 1 text..." },
-           { "id": 2, "text": "Step 2 text..." } 
+      Create a mini-exam of ${count} questions for the topic: "${topic}".
+      Include a mix of Multiple Choice (MCQ) and Short Answer.
+      
+      Context: Ghanaian SHS Additional Mathematics.
+      
+      Return strictly JSON:
+      {
+        "questions": [
+          {
+            "id": 1,
+            "type": "mcq", 
+            "text": "Question text...",
+            "options": ["A", "B", "C", "D"],
+            "correctAnswer": "A"
+          },
+          {
+            "id": 2,
+            "type": "short",
+            "text": "Question text...",
+            "correctAnswer": "Answer string" 
+          }
         ]
-      }
-      The steps array should be in the CORRECT logical order. The UI will shuffle them.
-    `;
-    return callGemini(prompt, true);
-};
-
-export const generateErrorCorrection = async (topic) => {
-    const prompt = `
-      Create an 'Identify the Error' problem for "${topic}".
-      Provide a solution path where ONE step is deliberately wrong.
-      Return strictly JSON: {
-        "problem": "...",
-        "steps": [
-           { "id": 1, "text": "Correct step..." },
-           { "id": 2, "text": "The WRONG step..." },
-           { "id": 3, "text": "Follow up step..." }
-        ],
-        "errorStepId": 2,
-        "correction": "The correct calculation should be..."
-      }
-    `;
-    return callGemini(prompt, true);
-};
-
-export const generateHotspot = async (topic) => {
-    const prompt = `
-      Create a 'Visual Hotspot' challenge description for "${topic}".
-      Since we cannot generate images, describe a scenario where the student must identify a part.
-      Return strictly JSON: {
-        "description": "Imagine a triangle ABC...",
-        "question": "Which vertex corresponds to...",
-        "options": ["A", "B", "C"],
-        "correctAnswer": "A"
       }
     `;
     return callGemini(prompt, true);

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Loader2, Trophy, X } from 'lucide-react';
+import { Loader2, Trophy, ArrowRight, X } from 'lucide-react';
 import { generateSpinWheelQuestion } from '../../utils/aiLogic';
 import useMathJax from '../../hooks/useMathJax';
 
@@ -16,10 +16,9 @@ const SpinWheel = ({ topic }) => {
   const [loading, setLoading] = useState(false);
   const [score, setScore] = useState(0);
   const [selectedAmount, setSelectedAmount] = useState(null);
-  const [feedback, setFeedback] = useState(null);
+  const [feedback, setFeedback] = useState(null); // 'correct' | 'wrong'
 
-  // Re-run MathJax when question or feedback changes
-  useMathJax([activeQuestion, feedback]);
+  useMathJax([activeQuestion]);
 
   const spin = () => {
     if (isSpinning) return;
@@ -27,20 +26,38 @@ const SpinWheel = ({ topic }) => {
     setFeedback(null);
     setActiveQuestion(null);
 
+    // Random rotation (at least 5 full spins + random segment)
+    const randomSegment = Math.floor(Math.random() * AMOUNTS.length);
+    const segmentAngle = 360 / AMOUNTS.length;
+    // Calculate final rotation to land on the chosen segment
+    // Note: The pointer is usually at top (0 deg). 
+    // If we rotate clockwise, the segment at TOP is determined by (360 - (finalRot % 360)).
+    // Let's simplify: Just add a huge random rotation.
     const spinRot = 1800 + Math.floor(Math.random() * 360);
     const finalRot = rotation + spinRot;
+    
     setRotation(finalRot);
 
     setTimeout(() => {
       setIsSpinning(false);
+      // Determine which segment is at the top (pointer)
+      // Normalize angle to 0-360
       const normalizedRot = finalRot % 360;
-      const segmentAngle = 360 / AMOUNTS.length;
+      // Pointer is at top (270deg in CSS terms if 0 is right, but here we rotated the div).
+      // Let's assume standard css rotation: 0 is top? No, usually 0 is top if we set it.
+      // Let's calculate index based on the effective angle.
+      // Index = floor((360 - normalizedRot + offset) / segmentAngle) % length
+      // Simplified: Just match the logic to the visual.
+      // For now, let's trust the randomSegment logic directly if we forced it, 
+      // but since we did random rotation, let's reverse calc.
+      
       const effectiveAngle = (360 - normalizedRot) % 360;
       const index = Math.floor(effectiveAngle / segmentAngle);
       const amount = AMOUNTS[index];
       setSelectedAmount(amount);
+      
       fetchQuestion(amount);
-    }, 4000);
+    }, 4000); // 4s spin duration
   };
 
   const fetchQuestion = async (amount) => {
@@ -59,6 +76,7 @@ const SpinWheel = ({ topic }) => {
 
   const handleAnswer = (option) => {
     if (!activeQuestion) return;
+    
     if (option === activeQuestion.correctAnswer) {
       setFeedback('correct');
       setScore(s => s + activeQuestion.amount);
@@ -85,13 +103,37 @@ const SpinWheel = ({ topic }) => {
 
       {/* WHEEL CONTAINER */}
       <div className="relative w-80 h-80 md:w-96 md:h-96">
+        {/* Pointer */}
         <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-20 text-white drop-shadow-lg">
           <div className="w-8 h-12 bg-slate-800 clip-path-polygon-[50%_100%,0%_0%,100%_0%]"></div>
         </div>
+
+        {/* The Wheel */}
         <div 
           className="w-full h-full rounded-full border-8 border-slate-800 shadow-2xl overflow-hidden relative transition-transform duration-[4000ms] cubic-bezier(0.2, 0.8, 0.2, 1)"
           style={{ transform: `rotate(${rotation}deg)` }}
         >
+           {AMOUNTS.map((amt, i) => {
+             const angle = 360 / AMOUNTS.length;
+             const rotation = i * angle;
+             return (
+               <div 
+                 key={i}
+                 className="absolute top-0 left-1/2 w-1/2 h-1/2 origin-bottom-left flex items-center justify-center"
+                 style={{ 
+                   transform: `rotate(${rotation}deg) skewY(-${90 - angle}deg)`,
+                   backgroundColor: COLORS[i],
+                   transformOrigin: '50% 100%' // Verify logic
+                 }}
+               >
+                 {/* This CSS construction for wheel sectors is tricky. 
+                     Using conic-gradient is easier for background, but text placement needs absolute pos.
+                     Let's stick to a simpler visual approach: Conic gradient background + text overlay. 
+                  */}
+               </div>
+             );
+           })}
+           {/* Re-implementing with simpler Conic Gradient for background */}
            <div 
              className="absolute inset-0 rounded-full"
              style={{
@@ -100,8 +142,10 @@ const SpinWheel = ({ topic }) => {
                )`
              }}
            />
+           
+           {/* Text Labels */}
            {AMOUNTS.map((amt, i) => {
-             const angle = (i * 45) + 22.5; 
+             const angle = (i * 45) + 22.5; // Center of sector
              return (
                <div 
                  key={i}
@@ -113,6 +157,8 @@ const SpinWheel = ({ topic }) => {
              );
            })}
         </div>
+        
+        {/* Center Cap */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 bg-slate-900 rounded-full flex items-center justify-center border-4 border-slate-700 z-10 shadow-xl">
            <span className="text-2xl">🇬🇭</span>
         </div>
@@ -130,6 +176,7 @@ const SpinWheel = ({ topic }) => {
       {(loading || activeQuestion) && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 backdrop-blur-sm animate-in fade-in">
           <div className="bg-slate-900 w-full max-w-2xl rounded-2xl border border-slate-700 overflow-hidden shadow-2xl">
+            
             {loading ? (
                <div className="p-12 flex flex-col items-center justify-center text-slate-400">
                   <Loader2 className="w-12 h-12 animate-spin mb-4 text-indigo-500" />
@@ -152,11 +199,9 @@ const SpinWheel = ({ topic }) => {
                   </div>
 
                   <div className="p-8 overflow-y-auto max-h-[60vh]">
-                     {/* MathJax enabled content */}
-                     <div className="text-lg text-slate-200 mb-8 leading-relaxed font-medium">
-                        {/* We render simple text for now, assuming math is passed as text and caught by hook */}
+                     <p className="text-lg text-slate-200 mb-8 leading-relaxed font-medium">
                         {activeQuestion.question}
-                     </div>
+                     </p>
                      
                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {activeQuestion.options.map((opt, idx) => {
@@ -194,10 +239,7 @@ const SpinWheel = ({ topic }) => {
                              <h4 className={`text-lg font-bold mb-1 ${feedback === 'correct' ? 'text-emerald-400' : 'text-rose-400'}`}>
                                 {feedback === 'correct' ? 'Correct! Earnings Updated.' : 'Incorrect! Better luck next spin.'}
                              </h4>
-                             {/* MathJax enabled explanation */}
-                             <p className="text-slate-400 text-sm leading-relaxed">
-                                {activeQuestion.explanation}
-                             </p>
+                             <p className="text-slate-400 text-sm">{activeQuestion.explanation}</p>
                           </div>
                           <button 
                             onClick={closeQuestion}

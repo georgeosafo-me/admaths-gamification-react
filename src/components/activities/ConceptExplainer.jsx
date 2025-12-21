@@ -54,16 +54,8 @@ const ConceptExplainer = ({ topic }) => {
             <BookOpen className="w-6 h-6 text-emerald-400" />
             <h3 className="text-xl font-bold text-white">Explanation: {concept}</h3>
           </div>
-          
-          {/* Enhanced Typography for Dark Mode */}
           <div 
-            className="prose prose-lg prose-invert max-w-none 
-              prose-p:text-slate-300 prose-p:leading-relaxed
-              prose-headings:text-emerald-300 
-              prose-strong:text-indigo-400 prose-strong:font-bold
-              prose-ul:text-slate-300 prose-li:marker:text-emerald-500
-              prose-code:text-amber-300 prose-code:bg-slate-900/50 prose-code:px-1 prose-code:rounded
-            "
+            className="prose prose-invert max-w-none prose-p:text-slate-300 prose-headings:text-white prose-strong:text-emerald-400"
             dangerouslySetInnerHTML={{ __html: explanation }}
           />
         </div>

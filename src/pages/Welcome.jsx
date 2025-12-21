@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Target, Puzzle, Loader2, HelpCircle, List, XOctagon, MousePointer2, ChevronRight, BookOpen, RefreshCcw } from 'lucide-react';
+import { Target, Puzzle, Loader2, HelpCircle, List, XOctagon, MousePointer2, ChevronRight, BookOpen } from 'lucide-react';
 import { CURRICULUM, ACTIVITY_TYPES } from '../data/curriculum';
 
 const iconMap = {
-  Target, Puzzle, Loader2, HelpCircle, List, XOctagon, MousePointer2, BookOpen, RefreshCcw
+  Target, Puzzle, Loader2, HelpCircle, List, XOctagon, MousePointer2
 };
 
 const Welcome = () => {
@@ -23,9 +23,11 @@ const Welcome = () => {
 
   const handleActivitySelect = (activityId) => {
     if (selectedStrand && selectedSubStrand) {
-      // Navigate to the dynamic wrapper
-      // Path: /quest/:strandId/:subStrandId?mode=:activityId
-      navigate(`/quest/${selectedStrand.id}/${selectedSubStrand.id}?mode=${activityId}`);
+      if (selectedSubStrand.id === 'coordinate-geometry') {
+         navigate(`/coordinate-geometry-quest?mode=${activityId}`);
+      } else {
+         alert("This quest is under construction by Jules AI!");
+      }
     }
   };
 
@@ -133,7 +135,7 @@ const Welcome = () => {
             
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
               {ACTIVITY_TYPES.map((activity) => {
-                const Icon = iconMap[activity.icon] || Target; // Fallback
+                const Icon = iconMap[activity.icon];
                 return (
                   <button
                     key={activity.id}
