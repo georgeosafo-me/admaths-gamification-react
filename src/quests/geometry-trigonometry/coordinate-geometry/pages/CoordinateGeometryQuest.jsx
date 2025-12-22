@@ -4,7 +4,7 @@ import { TEMPLATES, INITIAL_DATA } from '../data/questions';
 import { callGemini, callGeminiTTS } from '../utils/geometryLogic';
 import ChallengeCard from '../components/ChallengeCard';
 
-const CoordinateGeometryQuest = () => {
+const CoordinateGeometryQuest = ({ onComplete }) => {
   // --- STATE ---
   const [answers, setAnswers] = useState({});
   const [missionData, setMissionData] = useState(INITIAL_DATA);
@@ -220,7 +220,10 @@ const CoordinateGeometryQuest = () => {
     const newAnswers = { ...answers, [key]: val.slice(-1) }; 
     setAnswers(newAnswers);
     const isComplete = Object.keys(currentSolution).every(k => newAnswers[k] === currentSolution[k]);
-    if (isComplete) setShowSuccess(true);
+    if (isComplete) {
+      setShowSuccess(true);
+      if (onComplete) onComplete();
+    }
   };
 
   const getCellStatus = (r, c) => {

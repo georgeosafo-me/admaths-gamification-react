@@ -9,7 +9,7 @@ const COLORS = [
   '#10b981', '#06b6d4', '#3b82f6', '#8b5cf6'
 ];
 
-const SpinWheel = ({ topic }) => {
+const SpinWheel = ({ topic, onCorrect }) => {
   const [isSpinning, setIsSpinning] = useState(false);
   const [rotation, setRotation] = useState(0);
   const [activeQuestion, setActiveQuestion] = useState(null);
@@ -62,6 +62,7 @@ const SpinWheel = ({ topic }) => {
     if (option === activeQuestion.correctAnswer) {
       setFeedback('correct');
       setScore(s => s + activeQuestion.amount);
+      if (onCorrect) onCorrect();
     } else {
       setFeedback('wrong');
     }

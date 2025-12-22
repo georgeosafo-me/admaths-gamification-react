@@ -3,7 +3,7 @@ import { BookOpen, Sparkles, Loader2 } from 'lucide-react';
 import { generateConceptExplanation } from '../../utils/aiLogic';
 import useMathJax from '../../hooks/useMathJax';
 
-const ConceptExplainer = ({ topic }) => {
+const ConceptExplainer = ({ topic, onExplain }) => {
   const [concept, setConcept] = useState('');
   const [explanation, setExplanation] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -19,6 +19,7 @@ const ConceptExplainer = ({ topic }) => {
     const result = await generateConceptExplanation(topic, concept);
     setExplanation(result);
     setLoading(false);
+    if (onExplain) onExplain();
   };
 
   return (

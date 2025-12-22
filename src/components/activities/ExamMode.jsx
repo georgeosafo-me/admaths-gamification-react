@@ -3,7 +3,7 @@ import { List, CheckCircle, XCircle, Loader2, RefreshCcw } from 'lucide-react';
 import { generateExamQuestions } from '../../utils/aiLogic';
 import useMathJax from '../../hooks/useMathJax';
 
-const ExamMode = ({ topic }) => {
+const ExamMode = ({ topic, onComplete }) => {
   const [questions, setQuestions] = useState([]);
   const [answers, setAnswers] = useState({});
   const [submitted, setSubmitted] = useState(false);
@@ -48,6 +48,7 @@ const ExamMode = ({ topic }) => {
     setScore(correct);
     setSubmitted(true);
     window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (onComplete) onComplete();
   };
 
   if (!questions.length && !loading) {
