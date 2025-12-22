@@ -73,9 +73,14 @@ export const CURRICULUM = {
   }
 };
 
+// Updated list of 8 activities, with 'Tutor' first as requested
 export const ACTIVITY_TYPES = [
+  { id: 'concept-explainer', title: 'Tutor', icon: 'BookOpen', description: 'AI Tutor with Ghanaian Context' },
   { id: 'quest', title: 'Quest', icon: 'Target', description: 'Crossword & Grid Challenges' },
   { id: 'spin-wheel', title: 'Spin Wheel', icon: 'Loader2', description: 'GHS Prize Questions' },
-  { id: 'concept-explainer', title: 'Concept Explainer', icon: 'BookOpen', description: 'AI Tutor with Ghanaian Context' },
+  { id: 'riddle', title: 'Riddle', icon: 'HelpCircle', description: 'Math Riddles & Logic' },
+  { id: 'rearrange', title: 'Rearrange', icon: 'RefreshCcw', description: 'Order the Steps' },
+  { id: 'error-correction', title: 'Error Fix', icon: 'XOctagon', description: 'Find the Mistake' },
+  { id: 'hotspot', title: 'Hotspot', icon: 'MousePointer2', description: 'Visual Identification' },
   { id: 'exam-mode', title: 'Exam Mode', icon: 'List', description: 'Timed Quizzes & Tests' }
 ];

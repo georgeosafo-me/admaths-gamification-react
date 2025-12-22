@@ -64,6 +64,9 @@ const Riddle = ({ topic, onCorrect }) => {
             <button onClick={() => setShowHint(true)} className="px-6 py-2 bg-slate-700 hover:bg-slate-600 text-slate-300 rounded-lg font-medium flex items-center gap-2">
               <Lightbulb className="w-4 h-4" /> Hint
             </button>
+            <button onClick={loadRiddle} className="px-6 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg font-bold transition-colors">
+              Next Riddle
+            </button>
           </div>
 
           {showHint && <p className="text-amber-400 italic mb-4 animate-in fade-in">Hint: {data.hint}</p>}

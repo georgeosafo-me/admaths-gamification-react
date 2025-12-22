@@ -126,9 +126,20 @@ export const generateConceptExplanation = async (topic, concept) => {
     const prompt = `
       Act as a Ghanaian Mathematics Tutor. Explain "${concept}" under "${topic}".
       Use Scaffolding. Use LaTeX $...$ for inline math.
-      Return valid HTML content.
+      
+      Requirements:
+      1. Explanation should be clear and student-friendly.
+      2. If a diagram is helpful, provide valid SVG code in a string format within a separate field, or embed it in HTML if possible but preferably separate.
+      3. Suggest 3 other areas/sub-topics under this topic that can be explored.
+      
+      Return strictly JSON:
+      {
+        "htmlContent": "<p>Basic HTML content with $math$...</p>",
+        "svg": "<svg ...>...</svg>" (optional, null if not needed),
+        "suggestions": ["Subtopic 1", "Subtopic 2", "Subtopic 3"]
+      }
     `;
-    return callGemini(prompt, false);
+    return callGemini(prompt, true);
 };
 
 export const generateExamQuestions = async (topic, count = 5) => {

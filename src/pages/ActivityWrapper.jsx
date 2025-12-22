@@ -14,12 +14,27 @@ import Hotspot from '../components/activities/Hotspot';
 
 import ProgressBar from '../components/ProgressBar';
 import useProgress from '../hooks/useProgress';
+import RewardModal from '../components/RewardModal';
+import { getRandomReward } from '../data/rewards';
 
 const ActivityWrapper = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const { subStrandId } = useParams(); 
   
+  // Reward Logic
+  const [showReward, setShowReward] = useState(false);
+  const [currentReward, setCurrentReward] = useState(getRandomReward());
+
+  const handleProgressUpdate = (type) => {
+    updateProgress(type);
+    // Show reward with 30% chance or logic based on type? 
+    // User asked "when a person answers a question correctly". 
+    // For now, we trigger it on every significant completion event to ensure visibility.
+    setCurrentReward(getRandomReward());
+    setShowReward(true);
+  };
+
   // Progress Logic
   const { progress, updateProgress } = useProgress(subStrandId);
 
@@ -37,13 +52,13 @@ const ActivityWrapper = () => {
   };
 
   const ACTIVITIES = [
+    { id: 'concept-explainer', label: 'Tutor', icon: BookOpen },
     { id: 'quest', label: 'Quest', icon: Target },
     { id: 'spin-wheel', label: 'Spin Wheel', icon: Loader2 },
     { id: 'riddle', label: 'Riddle', icon: HelpCircle },
     { id: 'rearrange', label: 'Rearrange', icon: RefreshCcw },
     { id: 'error-correction', label: 'Error Fix', icon: XOctagon },
     { id: 'hotspot', label: 'Hotspot', icon: Maximize },
-    { id: 'concept-explainer', label: 'Tutor', icon: BookOpen },
     { id: 'exam-mode', label: 'Exam', icon: List },
   ];
 
@@ -52,7 +67,7 @@ const ActivityWrapper = () => {
 
     // Special case for our fully implemented Coordinate Geometry module quest
     if (subStrandId === 'coordinate-geometry' && activeMode === 'quest') {
-        return <CoordinateGeometryQuest onComplete={() => updateProgress('quest')} />;
+        return <CoordinateGeometryQuest onComplete={() => handleProgressUpdate('quest')} />;
     }
 
     // Generic fallbacks for other topics/activities
@@ -66,19 +81,23 @@ const ActivityWrapper = () => {
             </div>
         );
       case 'spin-wheel':
-        return <SpinWheel topic={topicTitle} onCorrect={() => updateProgress('spin')} />;
+        return <SpinWheel topic={topicTitle} onCorrect={() => handleProgressUpdate('spin')} />;
       case 'concept-explainer':
+        // Tutor doesn't necessarily need a reward pop-up for just asking, 
+        // but user said "when a person answers...". 
+        // Tutor is exploration. Maybe no reward there? 
+        // Or maybe just progress update. Let's keep reward for "correct" answers/completion.
         return <ConceptExplainer topic={topicTitle} onExplain={() => updateProgress('tutor')} />;
       case 'exam-mode':
-        return <ExamMode topic={topicTitle} onComplete={() => updateProgress('exam')} />;
+        return <ExamMode topic={topicTitle} onComplete={() => handleProgressUpdate('exam')} />;
       case 'riddle':
-        return <Riddle topic={topicTitle} onCorrect={() => updateProgress('riddle')} />;
+        return <Riddle topic={topicTitle} onCorrect={() => handleProgressUpdate('riddle')} />;
       case 'rearrange':
-        return <Rearrange topic={topicTitle} onCorrect={() => updateProgress('rearrange')} />;
+        return <Rearrange topic={topicTitle} onCorrect={() => handleProgressUpdate('rearrange')} />;
       case 'error-correction':
-        return <ErrorCorrection topic={topicTitle} onCorrect={() => updateProgress('error')} />;
+        return <ErrorCorrection topic={topicTitle} onCorrect={() => handleProgressUpdate('error')} />;
       case 'hotspot':
-        return <Hotspot topic={topicTitle} onCorrect={() => updateProgress('hotspot')} />;
+        return <Hotspot topic={topicTitle} onCorrect={() => handleProgressUpdate('hotspot')} />;
       default:
         return null;
     }
@@ -135,6 +154,12 @@ const ActivityWrapper = () => {
       <div className="flex-1 overflow-x-hidden animate-in fade-in duration-300">
         {renderContent()}
       </div>
+      
+      <RewardModal 
+        isOpen={showReward} 
+        onClose={() => setShowReward(false)} 
+        reward={currentReward} 
+      />
     </div>
   );
 };
