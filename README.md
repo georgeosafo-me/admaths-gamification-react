@@ -4,7 +4,16 @@ A scalable gamified learning platform for SHS Additional Mathematics, structured
 
 ## 🚀 Project Goal
 
-To build a modular, extensible platform where each mathematical topic is a "Quest". The system is designed to integrate with AI for dynamic question generation (currently using stubs/placeholders).
+To build a modular, extensible platform where each mathematical topic is a "Quest". The system is designed to integrate with AI for dynamic question generation, explanations, and interactive challenges.
+
+## 🌟 Key Features
+
+*   **Interactive Quests**: Crossword puzzles and grid challenges.
+*   **AI Tutor**: Context-aware explanations with SVG diagrams and subtopic suggestions.
+*   **Spin Wheel**: Gamified reward system with difficulty-scaled questions.
+*   **Exam Mode**: Timed quizzes with immediate feedback.
+*   **Reward System**: Unlock calculator tips, quotes, and strategies.
+*   **MathJax Support**: Beautiful rendering of mathematical equations.
 
 ## 📂 Folder Structure
 
@@ -36,15 +45,15 @@ src/quests/
 *   **Tailwind CSS 3**
 *   **MathJax** (for rendering equations)
 *   **Lucide React** (Icons)
+*   **Google Gemini AI** (Content Generation)
 
 ## 🤖 AI Integration
 
-The project is designed to plug in AI for:
-*   Generating crossword puzzles/questions (`utils/geometryLogic.js`).
-*   Providing smart hints.
+The project uses Google Gemini for:
+*   Generating crossword puzzles/questions.
+*   Providing smart hints and conceptual explanations.
 *   Text-to-Speech for clues.
-
-Currently, it uses placeholder/mock logic or requires an API key for live generation.
+*   Generating SVGs for geometric concepts.
 
 ## 📦 Installation & Usage
 
