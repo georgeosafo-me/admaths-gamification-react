@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { Loader2, Trophy, X, Sparkles, ArrowRight } from 'lucide-react';
+import { Loader2, Trophy, X, Sparkles, ArrowRight, AlertTriangle } from 'lucide-react';
 import { generateSpinWheelQuestion, generateConceptExplanation } from '../../utils/aiLogic';
 import useMathJax from '../../hooks/useMathJax';
 import AIHelpModal from '../AIHelpModal';
+import GhanaFlagPointer from '../GhanaFlagPointer';
 
 const AMOUNTS = [1, 2, 5, 10, 20, 50, 100, 200];
 const COLORS = [
@@ -22,6 +23,7 @@ const SpinWheel = ({ topic, onCorrect }) => {
   const [score, setScore] = useState(0);
   const [selectedAmount, setSelectedAmount] = useState(null);
   const [feedback, setFeedback] = useState(null);
+  const [error, setError] = useState(null);
 
   const activeQuestion = queue[currentIndex];
 
@@ -57,6 +59,7 @@ const SpinWheel = ({ topic, onCorrect }) => {
     setFeedback(null);
     setQueue([]);
     setCurrentIndex(0);
+    setError(null);
 
     const spinRot = 1800 + Math.floor(Math.random() * 360);
     const finalRot = rotation + spinRot;
@@ -76,21 +79,33 @@ const SpinWheel = ({ topic, onCorrect }) => {
 
   const fetchBatch = async (amount) => {
     setLoading(true);
-    // Fetch 5 questions for this amount
-    const data = await generateSpinWheelQuestion(topic, amount, 5);
-    if (data) {
-      try {
-        const parsed = JSON.parse(data);
-        if (parsed.questions) {
-            // Map amount to each question as it's constant for this batch
-            const questions = parsed.questions.map(q => ({...q, amount}));
-            setQueue(questions);
-            setCurrentIndex(0);
+    setError(null);
+    
+    try {
+        // Fetch 5 questions for this amount
+        const data = await generateSpinWheelQuestion(topic, amount, 5);
+        if (data) {
+            try {
+                const parsed = JSON.parse(data);
+                if (parsed.questions) {
+                    // Map amount to each question as it's constant for this batch
+                    const questions = parsed.questions.map(q => ({...q, amount}));
+                    setQueue(questions);
+                    setCurrentIndex(0);
+                } else {
+                    throw new Error("Invalid response format");
+                }
+            } catch (e) {
+                console.error(e);
+                setError("Failed to parse question data.");
+            }
+        } else {
+            setError("Connection timed out or failed. Please try again.");
         }
-      } catch (e) {
-        console.error(e);
-      }
+    } catch (err) {
+        setError("Network error occurred.");
     }
+    
     setLoading(false);
   };
 
@@ -121,6 +136,7 @@ const SpinWheel = ({ topic, onCorrect }) => {
   const closeQuestion = () => {
     setQueue([]);
     setFeedback(null);
+    setError(null);
   };
 
   return (
@@ -128,9 +144,7 @@ const SpinWheel = ({ topic, onCorrect }) => {
       
       {/* WHEEL CONTAINER */}
       <div className="relative w-72 h-72 md:w-80 md:h-80 flex-shrink-0">
-        <div className="absolute -top-6 left-1/2 -translate-x-1/2 z-20 text-4xl drop-shadow-lg">
-          🇬🇭
-        </div>
+        <GhanaFlagPointer />
         <div 
           className="w-full h-full rounded-full border-8 border-slate-800 shadow-2xl overflow-hidden relative transition-transform duration-[4000ms] cubic-bezier(0.2, 0.8, 0.2, 1)"
           style={{ transform: `rotate(${rotation}deg)` }}
@@ -176,7 +190,7 @@ const SpinWheel = ({ topic, onCorrect }) => {
       </div>
 
       {/* QUESTION MODAL */}
-      {(loading || activeQuestion) && (
+      {(loading || activeQuestion || error) && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 backdrop-blur-sm animate-in fade-in">
           <div className="bg-slate-900 w-full max-w-2xl rounded-2xl border border-slate-700 overflow-hidden shadow-2xl">
             {loading ? (
@@ -184,6 +198,20 @@ const SpinWheel = ({ topic, onCorrect }) => {
                   <Loader2 className="w-12 h-12 animate-spin mb-4 text-indigo-500" />
                   <p className="text-lg animate-pulse">Consulting the Oracle for a GHS {selectedAmount} question...</p>
                </div>
+            ) : error ? (
+                <div className="p-12 flex flex-col items-center justify-center text-center">
+                    <AlertTriangle className="w-12 h-12 text-rose-500 mb-4" />
+                    <h3 className="text-xl font-bold text-white mb-2">Oops!</h3>
+                    <p className="text-slate-400 mb-6">{error}</p>
+                    <div className="flex gap-4">
+                        <button onClick={closeQuestion} className="px-6 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg font-bold">
+                            Cancel
+                        </button>
+                        <button onClick={() => fetchBatch(selectedAmount)} className="px-6 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-bold">
+                            Try Again
+                        </button>
+                    </div>
+                </div>
             ) : (
                <div className="flex flex-col h-full">
                   <div className="bg-slate-800 p-6 border-b border-slate-700 flex justify-between items-center">
