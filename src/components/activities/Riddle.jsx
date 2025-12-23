@@ -112,7 +112,6 @@ const Riddle = ({ topic, onCorrect }) => {
       <AIHelpModal 
         isOpen={aiOpen}
         onClose={() => setAiOpen(false)}
-        title="Riddle Logic"
         content={aiContent}
         loading={aiLoading}
       />
