@@ -124,16 +124,20 @@ export const generateSpinWheelQuestion = async (topic, amount) => {
 
 export const generateConceptExplanation = async (topic, concept) => {
     const prompt = `
-      Act as a Ghanaian Mathematics Tutor. Explain "${concept}" under "${topic}".
-      Use Scaffolding. Use LaTeX $...$ for inline math.
-      
-      Requirements:
-      1. Explanation should be clear and student-friendly.
-      2. If a diagram is helpful, provide valid SVG code in a string format within a separate field, or embed it in HTML if possible but preferably separate.
-      3. Suggest 3 other areas/sub-topics under this topic that can be explored.
-      
+      Act as a Ghanaian Mathematics Tutor. You are helping a student with the topic: "${topic}".
+      The student asked about: "${concept}".
+
+      TASK:
+      1. Check if the concept is relevant to the topic "${topic}" or general mathematics.
+      2. If it is UNRELATED (e.g. asking about sports, politics, or something completely non-math), return "related": false.
+      3. If it is RELATED, provide a clear explanation using Scaffolding and LaTeX $...$.
+      4. Suggest 3 other areas/sub-topics under this topic that can be explored.
+      5. If a diagram is helpful, provide valid SVG code.
+
       Return strictly JSON:
       {
+        "related": true,
+        "message": "Only set this if related is false. Suggest searching for something relevant to ${topic}.",
         "htmlContent": "<p>Basic HTML content with $math$...</p>",
         "svg": "<svg ...>...</svg>" (optional, null if not needed),
         "suggestions": ["Subtopic 1", "Subtopic 2", "Subtopic 3"]
