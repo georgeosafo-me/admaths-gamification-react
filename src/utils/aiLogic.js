@@ -151,57 +151,70 @@ export const generateExamQuestions = async (topic, count = 5) => {
     return callGemini(prompt, true);
 };
 
-export const generateRiddle = async (topic) => {
+export const generateRiddle = async (topic, count = 1) => {
     const prompt = `
-      Create a fun math riddle about "${topic}".
-      Return strictly JSON: { "riddle": "...", "answer": "...", "hint": "..." }
+      Create ${count} fun math riddle(s) about "${topic}".
+      Return strictly JSON: 
+      { "riddles": [ 
+          { "riddle": "...", "answer": "...", "hint": "..." } 
+      ] }
     `;
     return callGemini(prompt, true);
 };
 
-export const generateRearrange = async (topic) => {
+export const generateRearrange = async (topic, count = 1) => {
     const prompt = `
-      Create a 'Rearrange the Steps' problem for solving a standard problem in "${topic}".
-      Return strictly JSON: { 
-        "problem": "Solve for x...", 
-        "steps": [
-           { "id": 1, "text": "Step 1 text..." },
-           { "id": 2, "text": "Step 2 text..." } 
-        ]
-      }
+      Create ${count} 'Rearrange the Steps' problem(s) for solving a standard problem in "${topic}".
+      Return strictly JSON: 
+      { "sets": [
+          {
+            "problem": "Solve for x...", 
+            "steps": [
+               { "id": 1, "text": "Step 1 text..." },
+               { "id": 2, "text": "Step 2 text..." } 
+            ]
+          }
+      ] }
       The steps array should be in the CORRECT logical order. The UI will shuffle them.
     `;
     return callGemini(prompt, true);
 };
 
-export const generateErrorCorrection = async (topic) => {
+export const generateErrorCorrection = async (topic, count = 1) => {
     const prompt = `
-      Create an 'Identify the Error' problem for "${topic}".
+      Create ${count} 'Identify the Error' problem(s) for "${topic}".
       Provide a solution path where ONE step is deliberately wrong.
-      Return strictly JSON: {
-        "problem": "...",
-        "steps": [
-           { "id": 1, "text": "Correct step..." },
-           { "id": 2, "text": "The WRONG step..." },
-           { "id": 3, "text": "Follow up step..." }
-        ],
-        "errorStepId": 2,
-        "correction": "The correct calculation should be..."
-      }
+      Return strictly JSON: 
+      { "problems": [
+          {
+            "problem": "...",
+            "steps": [
+               { "id": 1, "text": "Correct step..." },
+               { "id": 2, "text": "The WRONG step..." },
+               { "id": 3, "text": "Follow up step..." }
+            ],
+            "errorStepId": 2,
+            "correction": "The correct calculation should be..."
+          }
+      ] }
     `;
     return callGemini(prompt, true);
 };
 
-export const generateHotspot = async (topic) => {
+export const generateHotspot = async (topic, count = 1) => {
     const prompt = `
-      Create a 'Visual Hotspot' challenge description for "${topic}".
+      Create ${count} 'Visual Hotspot' challenge description(s) for "${topic}".
       Since we cannot generate images, describe a scenario where the student must identify a part.
-      Return strictly JSON: {
-        "description": "Imagine a triangle ABC...",
-        "question": "Which vertex corresponds to...",
-        "options": ["A", "B", "C"],
-        "correctAnswer": "A"
-      }
+      Return strictly JSON: 
+      { "challenges": [
+          {
+            "description": "Imagine a triangle ABC...",
+            "question": "Which vertex corresponds to...",
+            "options": ["A", "B", "C"],
+            "correctAnswer": "A",
+            "explanation": "Vertex A is the..."
+          }
+      ] }
     `;
     return callGemini(prompt, true);
 };
