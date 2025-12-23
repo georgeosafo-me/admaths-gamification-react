@@ -223,10 +223,6 @@ const SpinWheel = ({ topic, onCorrect }) => {
                              <h4 className={`text-lg font-bold mb-1 ${feedback === 'correct' ? 'text-emerald-400' : 'text-rose-400'}`}>
                                 {feedback === 'correct' ? 'Correct! Earnings Updated.' : 'Incorrect! Better luck next spin.'}
                              </h4>
-                             {/* MathJax enabled explanation */}
-                             <p className="text-slate-400 text-sm leading-relaxed">
-                                {activeQuestion.explanation}
-                             </p>
                           </div>
                           <button 
                             onClick={handleAIExplain}
