@@ -148,9 +148,65 @@ export const generateConceptExplanation = async (topic, concept) => {
     return callGemini(prompt, true);
 };
 
-export const generateExamQuestions = async (topic, count = 5) => {
-    const prompt = `Create mini-exam of ${count} questions for "${topic}". Context: Ghana. Use LaTeX $...$. Return strictly JSON: { "questions": [...] }`;
-    return callGemini(prompt, true);
+export const generateExamQuestions = async (topic, count = 20) => {
+    // We split into two batches for robustness
+    const batch1Count = Math.floor(count / 2);
+    const batch2Count = count - batch1Count;
+
+    const prompt1 = `
+      Create an Exam Section A with ${batch1Count} questions for "${topic}".
+      Question Types: Mixture of MCQ (Multiple Choice), MSQ (Multiple Select), and Boolean (True/False).
+      Context: Ghana SHS Additional Mathematics.
+      Use LaTeX $...$ for math.
+      
+      Return strictly JSON:
+      { "questions": [
+          { 
+            "id": "unique_id_1",
+            "type": "mcq", // or "msq", "boolean"
+            "text": "Question text...", 
+            "options": ["A", "B", "C", "D"], 
+            "correctAnswer": "A" // or ["A", "C"] for msq
+          }
+      ] }
+    `;
+
+    const prompt2 = `
+      Create an Exam Section B with ${batch2Count} structured questions for "${topic}".
+      Question Types: "structured" (Multi-step fill-in).
+      Context: Ghana SHS Additional Mathematics.
+      Use LaTeX $...$ for math.
+      
+      For "structured" questions, provide a series of logical steps the student must answer.
+      
+      Return strictly JSON:
+      { "questions": [
+          { 
+            "id": "unique_id_11",
+            "type": "structured",
+            "text": "Main problem text...", 
+            "steps": [
+               { "label": "Step 1: Find derivative", "answer": "2x" },
+               { "label": "Step 2: Solve for x", "answer": "5" }
+            ]
+          }
+      ] }
+    `;
+
+    try {
+        const [res1, res2] = await Promise.all([
+            callGemini(prompt1, true),
+            callGemini(prompt2, true)
+        ]);
+
+        const q1 = res1 ? JSON.parse(res1).questions : [];
+        const q2 = res2 ? JSON.parse(res2).questions : [];
+        
+        return JSON.stringify({ questions: [...q1, ...q2] });
+    } catch (e) {
+        console.error("Exam generation failed", e);
+        return null;
+    }
 };
 
 export const generateRiddle = async (topic, count = 1) => {
