@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Loader2, Trophy, X, Sparkles } from 'lucide-react';
+import { Loader2, Trophy, X, Sparkles, ArrowRight } from 'lucide-react';
 import { generateSpinWheelQuestion, generateConceptExplanation } from '../../utils/aiLogic';
 import useMathJax from '../../hooks/useMathJax';
 import AIHelpModal from '../AIHelpModal';
@@ -13,11 +13,17 @@ const COLORS = [
 const SpinWheel = ({ topic, onCorrect }) => {
   const [isSpinning, setIsSpinning] = useState(false);
   const [rotation, setRotation] = useState(0);
-  const [activeQuestion, setActiveQuestion] = useState(null);
+  
+  // Queue Logic
+  const [queue, setQueue] = useState([]);
+  const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(false);
+  
   const [score, setScore] = useState(0);
   const [selectedAmount, setSelectedAmount] = useState(null);
   const [feedback, setFeedback] = useState(null);
+
+  const activeQuestion = queue[currentIndex];
 
   // AI Modal State
   const [aiOpen, setAiOpen] = useState(false);
@@ -31,10 +37,6 @@ const SpinWheel = ({ topic, onCorrect }) => {
     if (!activeQuestion) return;
     setAiOpen(true);
     setAiLoading(true);
-    
-    // We ask AI to explain why the correct answer is correct
-    // We can reuse generateConceptExplanation or create a specific one.
-    // Let's use generateConceptExplanation but phrase the concept as the question itself.
     try {
         const resultJson = await generateConceptExplanation(topic, `Why is the answer to "${activeQuestion.question}" -> "${activeQuestion.correctAnswer}"?`);
         if (resultJson) {
@@ -53,7 +55,8 @@ const SpinWheel = ({ topic, onCorrect }) => {
     if (isSpinning) return;
     setIsSpinning(true);
     setFeedback(null);
-    setActiveQuestion(null);
+    setQueue([]);
+    setCurrentIndex(0);
 
     const spinRot = 1800 + Math.floor(Math.random() * 360);
     const finalRot = rotation + spinRot;
@@ -67,22 +70,41 @@ const SpinWheel = ({ topic, onCorrect }) => {
       const index = Math.floor(effectiveAngle / segmentAngle);
       const amount = AMOUNTS[index];
       setSelectedAmount(amount);
-      fetchQuestion(amount);
+      fetchBatch(amount);
     }, 4000);
   };
 
-  const fetchQuestion = async (amount) => {
+  const fetchBatch = async (amount) => {
     setLoading(true);
-    const data = await generateSpinWheelQuestion(topic, amount);
+    // Fetch 5 questions for this amount
+    const data = await generateSpinWheelQuestion(topic, amount, 5);
     if (data) {
       try {
-        const q = JSON.parse(data);
-        setActiveQuestion({ ...q, amount });
+        const parsed = JSON.parse(data);
+        if (parsed.questions) {
+            // Map amount to each question as it's constant for this batch
+            const questions = parsed.questions.map(q => ({...q, amount}));
+            setQueue(questions);
+            setCurrentIndex(0);
+        }
       } catch (e) {
         console.error(e);
       }
     }
     setLoading(false);
+  };
+
+  const handleNext = () => {
+    setFeedback(null);
+    if (currentIndex < queue.length - 1) {
+      setCurrentIndex(prev => prev + 1);
+    } else {
+      // If we run out of questions for this spin, maybe close modal or offer to spin again?
+      // Since it's a "Spin Wheel", forcing a re-spin is natural after the batch is done.
+      // But the user said "seamless transition... generate more".
+      // I'll show "Spin Again" if queue is empty.
+      setQueue([]); // Close modal
+    }
   };
 
   const handleAnswer = (option) => {
@@ -97,7 +119,7 @@ const SpinWheel = ({ topic, onCorrect }) => {
   };
 
   const closeQuestion = () => {
-    setActiveQuestion(null);
+    setQueue([]);
     setFeedback(null);
   };
 
@@ -149,7 +171,7 @@ const SpinWheel = ({ topic, onCorrect }) => {
 
       <button
         onClick={spin}
-        disabled={isSpinning || activeQuestion}
+        disabled={isSpinning || (queue.length > 0)}
         className="px-12 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white rounded-full font-bold text-xl shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105 active:scale-95"
       >
         {isSpinning ? 'Spinning...' : 'SPIN THE WHEEL'}
@@ -171,7 +193,7 @@ const SpinWheel = ({ topic, onCorrect }) => {
                         <span className="inline-block px-3 py-1 bg-amber-500/20 text-amber-400 text-xs font-bold rounded-full mb-2">
                            FOR GHS {activeQuestion.amount}
                         </span>
-                        <h3 className="text-xl font-bold text-white">Prize Question</h3>
+                        <h3 className="text-xl font-bold text-white">Prize Question {currentIndex + 1}</h3>
                     </div>
                     {feedback && (
                         <button onClick={closeQuestion} className="p-2 hover:bg-slate-700 rounded-full text-slate-400">
@@ -230,12 +252,22 @@ const SpinWheel = ({ topic, onCorrect }) => {
                           >
                              <Sparkles className="w-4 h-4" /> Explain Why
                           </button>
-                          <button 
-                            onClick={closeQuestion}
-                            className="px-6 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg font-bold"
-                          >
-                             Continue
-                          </button>
+                          
+                          {currentIndex < queue.length - 1 ? (
+                              <button 
+                                onClick={handleNext}
+                                className="px-6 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-bold flex items-center gap-2"
+                              >
+                                 Next Question <ArrowRight className="w-4 h-4" />
+                              </button>
+                          ) : (
+                              <button 
+                                onClick={closeQuestion}
+                                className="px-6 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg font-bold"
+                              >
+                                 Finish & Spin
+                              </button>
+                          )}
                        </div>
                     </div>
                   )}
