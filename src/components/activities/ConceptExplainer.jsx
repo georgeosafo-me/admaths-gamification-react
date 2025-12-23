@@ -4,7 +4,7 @@ import { generateConceptExplanation } from '../../utils/aiLogic';
 import useMathJax from '../../hooks/useMathJax';
 import { CURRICULUM } from '../../data/curriculum';
 
-const ConceptExplainer = ({ topic, onExplain }) => {
+const ConceptExplainer = ({ topic, topicId, onExplain }) => {
   const [concept, setConcept] = useState('');
   const [data, setData] = useState(null); // { htmlContent, svg, suggestions, related, message }
   const [loading, setLoading] = useState(false);
@@ -20,8 +20,15 @@ const ConceptExplainer = ({ topic, onExplain }) => {
       allSubStrands = [...allSubStrands, ...strand.subStrands];
     });
     
-    // Attempt to match topic title
-    const match = allSubStrands.find(s => s.title === topic);
+    // Attempt to match topic by ID (preferred) or Title (fallback)
+    let match = null;
+    if (topicId) {
+        match = allSubStrands.find(s => s.id === topicId);
+    } 
+    if (!match) {
+        match = allSubStrands.find(s => s.title === topic);
+    }
+
     if (match && match.topics) {
       setSubTopics(match.topics);
     } else {
@@ -31,7 +38,7 @@ const ConceptExplainer = ({ topic, onExplain }) => {
     // Reset data when topic changes
     setData(null);
     setConcept('');
-  }, [topic]);
+  }, [topic, topicId]);
 
   const handleExplain = async (e, customTopic) => {
     if (e) e.preventDefault();
