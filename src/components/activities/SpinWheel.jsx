@@ -124,20 +124,12 @@ const SpinWheel = ({ topic, onCorrect }) => {
   };
 
   return (
-    <div className="flex flex-col items-center gap-8 w-full">
-      {/* SCOREBOARD */}
-      <div className="bg-slate-900 px-8 py-4 rounded-2xl border border-amber-500/30 flex items-center gap-4 shadow-[0_0_20px_rgba(245,158,11,0.2)]">
-        <Trophy className="w-8 h-8 text-amber-400" />
-        <div>
-          <p className="text-xs text-amber-500 font-bold uppercase tracking-wider">Total Earnings</p>
-          <p className="text-3xl font-black text-white font-mono">GHS {score}</p>
-        </div>
-      </div>
-
+    <div className="flex flex-col-reverse md:flex-row items-center justify-center gap-12 w-full max-w-5xl">
+      
       {/* WHEEL CONTAINER */}
-      <div className="relative w-80 h-80 md:w-96 md:h-96">
-        <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-20 text-white drop-shadow-lg">
-          <div className="w-8 h-12 bg-slate-800 clip-path-polygon-[50%_100%,0%_0%,100%_0%]"></div>
+      <div className="relative w-72 h-72 md:w-80 md:h-80 flex-shrink-0">
+        <div className="absolute -top-6 left-1/2 -translate-x-1/2 z-20 text-4xl drop-shadow-lg">
+          🇬🇭
         </div>
         <div 
           className="w-full h-full rounded-full border-8 border-slate-800 shadow-2xl overflow-hidden relative transition-transform duration-[4000ms] cubic-bezier(0.2, 0.8, 0.2, 1)"
@@ -164,18 +156,24 @@ const SpinWheel = ({ topic, onCorrect }) => {
              );
            })}
         </div>
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 bg-slate-900 rounded-full flex items-center justify-center border-4 border-slate-700 z-10 shadow-xl">
-           <span className="text-2xl">🇬🇭</span>
-        </div>
+        
+        {/* CENTER SPIN BUTTON */}
+        <button
+          onClick={spin}
+          disabled={isSpinning || (queue.length > 0)}
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-20 h-20 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white rounded-full flex items-center justify-center border-4 border-slate-800 z-10 shadow-xl disabled:opacity-80 disabled:cursor-not-allowed transform hover:scale-105 active:scale-95 transition-all font-bold text-sm text-center leading-tight"
+        >
+          {isSpinning ? <Loader2 className="animate-spin w-6 h-6" /> : 'SPIN'}
+        </button>
       </div>
 
-      <button
-        onClick={spin}
-        disabled={isSpinning || (queue.length > 0)}
-        className="px-12 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white rounded-full font-bold text-xl shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105 active:scale-95"
-      >
-        {isSpinning ? 'Spinning...' : 'SPIN THE WHEEL'}
-      </button>
+      {/* SCOREBOARD (Right Side) */}
+      <div className="bg-slate-900/80 px-8 py-6 rounded-2xl border border-amber-500/30 flex flex-col items-center gap-2 shadow-[0_0_30px_rgba(245,158,11,0.15)] min-w-[200px]">
+        <Trophy className="w-10 h-10 text-amber-400 mb-2" />
+        <p className="text-xs text-amber-500 font-bold uppercase tracking-widest text-center">Total Earnings</p>
+        <p className="text-4xl font-black text-white font-mono tracking-tight">GHS {score}</p>
+        <div className="w-full h-1 bg-gradient-to-r from-transparent via-amber-500/50 to-transparent mt-2"></div>
+      </div>
 
       {/* QUESTION MODAL */}
       {(loading || activeQuestion) && (
