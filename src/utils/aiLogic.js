@@ -105,19 +105,21 @@ export const callGeminiTTS = async (text, apiKey = "") => {
 
 // --- SPECIALIZED PROMPT BUILDERS ---
 
-export const generateSpinWheelQuestion = async (topic, amount) => {
+export const generateSpinWheelQuestion = async (topic, amount, count = 1) => {
     let difficulty = "Very Easy (Recall)";
     if (amount >= 10) difficulty = "Medium (Skill application)";
     if (amount >= 50) difficulty = "Hard (Analysis/Problem Solving)";
     if (amount >= 200) difficulty = "Expert (Complex Real-world)";
 
     const prompt = `
-      Generate a single high-quality Additional Mathematics question for the topic: "${topic}".
+      Generate ${count} high-quality Additional Mathematics question(s) for the topic: "${topic}".
       Difficulty Level: ${difficulty} (Value: GHS ${amount}).
       Context: Use Ghanaian names and contexts.
       Use LaTeX $...$ for inline math.
       Return strictly JSON:
-      { "type": "mcq", "question": "...", "options": [...], "correctAnswer": "...", "explanation": "..." }
+      { "questions": [
+          { "type": "mcq", "question": "...", "options": [...], "correctAnswer": "...", "explanation": "..." }
+      ] }
     `;
     return callGemini(prompt, true);
 };

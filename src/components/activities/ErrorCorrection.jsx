@@ -1,23 +1,51 @@
 import React, { useState } from 'react';
-import { XOctagon, Check, AlertTriangle } from 'lucide-react';
+import { XOctagon, Check, AlertTriangle, ArrowRight } from 'lucide-react';
 import { generateErrorCorrection } from '../../utils/aiLogic';
 import useMathJax from '../../hooks/useMathJax';
 
 const ErrorCorrection = ({ topic, onCorrect }) => {
-  const [data, setData] = useState(null);
+  const [queue, setQueue] = useState([]);
+  const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(false);
+  
   const [selectedStep, setSelectedStep] = useState(null);
   const [feedback, setFeedback] = useState(null);
 
+  const data = queue[currentIndex];
+
   useMathJax([data]);
 
-  const loadProblem = async () => {
+  const loadBatch = async (initial = false) => {
     setLoading(true);
+    const res = await generateErrorCorrection(topic, 5);
+    if (res) {
+      try {
+        const parsed = JSON.parse(res);
+        if (parsed.problems) {
+          if (initial) {
+            setQueue(parsed.problems);
+            setCurrentIndex(0);
+          } else {
+            setQueue(prev => [...prev, ...parsed.problems]);
+          }
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+    setLoading(false);
+  };
+
+  const handleNext = () => {
     setFeedback(null);
     setSelectedStep(null);
-    const res = await generateErrorCorrection(topic);
-    if (res) setData(JSON.parse(res));
-    setLoading(false);
+    if (currentIndex < queue.length - 1) {
+      setCurrentIndex(prev => prev + 1);
+    } else {
+      loadBatch(false).then(() => {
+         setCurrentIndex(prev => prev + 1);
+      });
+    }
   };
 
   const handleSelect = (id) => {
@@ -35,12 +63,19 @@ const ErrorCorrection = ({ topic, onCorrect }) => {
     <div className="max-w-2xl mx-auto p-6">
       {!data ? (
         <div className="text-center py-20">
-          <button onClick={loadProblem} disabled={loading} className="px-8 py-4 bg-rose-600 hover:bg-rose-500 text-white rounded-2xl font-bold shadow-lg">
+          <button onClick={() => loadBatch(true)} disabled={loading} className="px-8 py-4 bg-rose-600 hover:bg-rose-500 text-white rounded-2xl font-bold shadow-lg">
             {loading ? 'Planting Errors...' : 'Find the Mistake'}
           </button>
         </div>
       ) : (
         <div>
+          <div className="flex justify-between items-center mb-6">
+             <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">
+                Problem {currentIndex + 1}
+             </span>
+             {loading && <span className="text-xs text-rose-400 animate-pulse">Loading more...</span>}
+          </div>
+
           <div className="text-center mb-8">
             <XOctagon className="w-12 h-12 text-rose-400 mx-auto mb-2" />
             <h3 className="text-xl font-bold text-white mb-2">{data.problem}</h3>
@@ -74,7 +109,9 @@ const ErrorCorrection = ({ topic, onCorrect }) => {
                 <Check className="w-5 h-5" /> Well Spotted!
               </h4>
               <p className="text-slate-300">{data.correction}</p>
-              <button onClick={loadProblem} className="mt-4 px-6 py-2 bg-emerald-600 text-white rounded-lg font-bold">Next</button>
+              <button onClick={handleNext} className="mt-4 px-6 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-bold flex items-center gap-2">
+                 Next Problem <ArrowRight className="w-4 h-4" />
+              </button>
             </div>
           )}
         </div>

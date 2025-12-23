@@ -5,8 +5,10 @@ import useMathJax from '../../hooks/useMathJax';
 import AIHelpModal from '../AIHelpModal';
 
 const Riddle = ({ topic, onCorrect }) => {
-  const [data, setData] = useState(null);
+  const [queue, setQueue] = useState([]);
+  const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(false);
+  
   const [answer, setAnswer] = useState('');
   const [feedback, setFeedback] = useState(null);
   const [showHint, setShowHint] = useState(false);
@@ -16,7 +18,46 @@ const Riddle = ({ topic, onCorrect }) => {
   const [aiLoading, setAiLoading] = useState(false);
   const [aiContent, setAiContent] = useState('');
 
+  const data = queue[currentIndex];
+
   useMathJax([data]);
+
+  const loadBatch = async (initial = false) => {
+    setLoading(true);
+    // Fetch 5 riddles
+    const res = await generateRiddle(topic, 5);
+    if (res) {
+      try {
+        const parsed = JSON.parse(res);
+        if (parsed.riddles) {
+          if (initial) {
+            setQueue(parsed.riddles);
+            setCurrentIndex(0);
+          } else {
+            setQueue(prev => [...prev, ...parsed.riddles]);
+          }
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+    setLoading(false);
+  };
+
+  const handleNext = () => {
+    setFeedback(null);
+    setAnswer('');
+    setShowHint(false);
+    
+    if (currentIndex < queue.length - 1) {
+      setCurrentIndex(prev => prev + 1);
+    } else {
+      // Load more if at end
+      loadBatch(false).then(() => {
+         setCurrentIndex(prev => prev + 1);
+      });
+    }
+  };
 
   const handleExplain = async () => {
     setAiOpen(true);
@@ -31,16 +72,6 @@ const Riddle = ({ topic, onCorrect }) => {
         setAiContent("Error.");
     }
     setAiLoading(false);
-  };
-
-  const loadRiddle = async () => {
-    setLoading(true);
-    setFeedback(null);
-    setAnswer('');
-    setShowHint(false);
-    const res = await generateRiddle(topic);
-    if (res) setData(JSON.parse(res));
-    setLoading(false);
   };
 
   const checkAnswer = () => {
@@ -58,15 +89,22 @@ const Riddle = ({ topic, onCorrect }) => {
       {!data ? (
         <div className="py-20">
           <button 
-            onClick={loadRiddle} 
+            onClick={() => loadBatch(true)} 
             disabled={loading}
             className="px-8 py-4 bg-purple-600 hover:bg-purple-500 text-white rounded-2xl font-bold shadow-lg text-xl"
           >
-            {loading ? 'Thinking...' : 'Get a Riddle'}
+            {loading ? 'Thinking...' : 'Get Riddles'}
           </button>
         </div>
       ) : (
         <div className="bg-slate-800 p-8 rounded-3xl border border-slate-700 shadow-2xl">
+          <div className="flex justify-between items-center mb-6">
+             <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">
+                Riddle {currentIndex + 1}
+             </span>
+             {loading && <span className="text-xs text-purple-400 animate-pulse">Loading more...</span>}
+          </div>
+
           <HelpCircle className="w-12 h-12 text-purple-400 mx-auto mb-4" />
           <h3 className="text-2xl font-bold text-white mb-6 leading-relaxed">"{data.riddle}"</h3>
           
@@ -85,7 +123,7 @@ const Riddle = ({ topic, onCorrect }) => {
             <button onClick={() => setShowHint(true)} className="px-6 py-2 bg-slate-700 hover:bg-slate-600 text-slate-300 rounded-lg font-medium flex items-center gap-2">
               <Lightbulb className="w-4 h-4" /> Hint
             </button>
-            <button onClick={loadRiddle} className="px-6 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg font-bold transition-colors">
+            <button onClick={handleNext} className="px-6 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg font-bold transition-colors">
               Next Riddle
             </button>
           </div>
