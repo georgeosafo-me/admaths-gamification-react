@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Loader2, Trophy, X } from 'lucide-react';
-import { generateSpinWheelQuestion } from '../../utils/aiLogic';
+import { Loader2, Trophy, X, Sparkles } from 'lucide-react';
+import { generateSpinWheelQuestion, generateConceptExplanation } from '../../utils/aiLogic';
 import useMathJax from '../../hooks/useMathJax';
+import AIHelpModal from '../AIHelpModal';
 
 const AMOUNTS = [1, 2, 5, 10, 20, 50, 100, 200];
 const COLORS = [
@@ -18,8 +19,35 @@ const SpinWheel = ({ topic, onCorrect }) => {
   const [selectedAmount, setSelectedAmount] = useState(null);
   const [feedback, setFeedback] = useState(null);
 
+  // AI Modal State
+  const [aiOpen, setAiOpen] = useState(false);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiContent, setAiContent] = useState('');
+
   // Re-run MathJax when question or feedback changes
   useMathJax([activeQuestion, feedback]);
+
+  const handleAIExplain = async () => {
+    if (!activeQuestion) return;
+    setAiOpen(true);
+    setAiLoading(true);
+    
+    // We ask AI to explain why the correct answer is correct
+    // We can reuse generateConceptExplanation or create a specific one.
+    // Let's use generateConceptExplanation but phrase the concept as the question itself.
+    try {
+        const resultJson = await generateConceptExplanation(topic, `Why is the answer to "${activeQuestion.question}" -> "${activeQuestion.correctAnswer}"?`);
+        if (resultJson) {
+            const parsed = JSON.parse(resultJson);
+            setAiContent(parsed.htmlContent);
+        } else {
+            setAiContent("Could not generate explanation.");
+        }
+    } catch (e) {
+        setAiContent("Error connecting to AI Tutor.");
+    }
+    setAiLoading(false);
+  };
 
   const spin = () => {
     if (isSpinning) return;
@@ -201,8 +229,14 @@ const SpinWheel = ({ topic, onCorrect }) => {
                              </p>
                           </div>
                           <button 
+                            onClick={handleAIExplain}
+                            className="ml-auto mr-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-bold flex items-center gap-2"
+                          >
+                             <Sparkles className="w-4 h-4" /> Explain Why
+                          </button>
+                          <button 
                             onClick={closeQuestion}
-                            className="ml-auto px-6 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg font-bold"
+                            className="px-6 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg font-bold"
                           >
                              Continue
                           </button>
@@ -214,6 +248,14 @@ const SpinWheel = ({ topic, onCorrect }) => {
           </div>
         </div>
       )}
+
+      <AIHelpModal 
+        isOpen={aiOpen}
+        onClose={() => setAiOpen(false)}
+        title="AI Explanation"
+        content={aiContent}
+        loading={aiLoading}
+      />
     </div>
   );
 };

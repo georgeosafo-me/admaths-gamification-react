@@ -3,6 +3,7 @@ import { Trophy, Calculator, HelpCircle, Target, Sparkles, X, Loader2, RefreshCc
 import { TEMPLATES, INITIAL_DATA } from '../data/questions';
 import { callGemini, callGeminiTTS } from '../utils/geometryLogic';
 import ChallengeCard from '../components/ChallengeCard';
+import AIHelpModal from '../../../../components/AIHelpModal';
 
 const CoordinateGeometryQuest = ({ onComplete }) => {
   // --- STATE ---
@@ -250,38 +251,13 @@ const CoordinateGeometryQuest = ({ onComplete }) => {
       `}</style>
 
       {/* AI HELP MODAL */}
-      {aiModalOpen && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-slate-800 border border-indigo-500/50 rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
-            <div className="bg-slate-900/50 p-4 border-b border-slate-700 flex justify-between items-center">
-              <h3 className="text-lg font-bold text-indigo-400 flex items-center gap-2">
-                <Sparkles className="w-5 h-5 text-indigo-400" />
-                {aiTitle}
-              </h3>
-              <button onClick={() => setAiModalOpen(false)} className="text-slate-400 hover:text-white transition-colors">
-                <X className="w-6 h-6" />
-              </button>
-            </div>
-            <div className="p-6 min-h-[150px] flex items-center justify-center">
-              {aiLoading ? (
-                <div className="flex flex-col items-center gap-3 text-slate-400">
-                  <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
-                  <p className="text-sm font-mono animate-pulse">Consulting AI Tutor...</p>
-                </div>
-              ) : (
-                <div className="text-slate-200 leading-relaxed text-lg math-content" dangerouslySetInnerHTML={{ __html: aiResponse }} />
-              )}
-            </div>
-            {!aiLoading && (
-              <div className="p-4 bg-slate-900/30 border-t border-slate-700 flex justify-end">
-                <button onClick={() => setAiModalOpen(false)} className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-medium transition-colors">
-                  Got it!
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+      <AIHelpModal 
+        isOpen={aiModalOpen}
+        onClose={() => setAiModalOpen(false)}
+        title={aiTitle}
+        content={aiResponse}
+        loading={aiLoading}
+      />
 
       <div className="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-8 flex-1">
         

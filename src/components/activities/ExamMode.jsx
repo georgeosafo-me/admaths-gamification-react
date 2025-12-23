@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { List, CheckCircle, XCircle, Loader2, RefreshCcw } from 'lucide-react';
-import { generateExamQuestions } from '../../utils/aiLogic';
+import { List, CheckCircle, XCircle, Loader2, RefreshCcw, Sparkles } from 'lucide-react';
+import { generateExamQuestions, generateConceptExplanation } from '../../utils/aiLogic';
 import useMathJax from '../../hooks/useMathJax';
+import AIHelpModal from '../AIHelpModal';
 
 const ExamMode = ({ topic, onComplete }) => {
   const [questions, setQuestions] = useState([]);
@@ -10,7 +11,31 @@ const ExamMode = ({ topic, onComplete }) => {
   const [loading, setLoading] = useState(false);
   const [score, setScore] = useState(0);
 
+  // AI Modal
+  const [aiOpen, setAiOpen] = useState(false);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiContent, setAiContent] = useState('');
+  const [aiTitle, setAiTitle] = useState('');
+
   useMathJax([questions]);
+
+  const handleExplain = async (question) => {
+    setAiTitle("Detailed Solution");
+    setAiOpen(true);
+    setAiLoading(true);
+    try {
+        const resultJson = await generateConceptExplanation(topic, `Explain the solution for: "${question.text}". Correct Answer: "${question.correctAnswer}"`);
+        if (resultJson) {
+            const parsed = JSON.parse(resultJson);
+            setAiContent(parsed.htmlContent);
+        } else {
+            setAiContent("No explanation available.");
+        }
+    } catch (e) {
+        setAiContent("Error loading explanation.");
+    }
+    setAiLoading(false);
+  };
 
   const startExam = async () => {
     setLoading(true);
@@ -148,11 +173,28 @@ const ExamMode = ({ topic, onComplete }) => {
                     }`}
                   />
                   {submitted && (
-                    <div className="mt-2 text-sm text-emerald-400">
-                      Correct Answer: {q.correctAnswer}
+                    <div className="mt-2 text-sm text-emerald-400 flex justify-between items-center">
+                      <span>Correct Answer: {q.correctAnswer}</span>
+                      <button 
+                        onClick={() => handleExplain(q)}
+                        className="text-xs flex items-center gap-1 text-indigo-400 hover:text-indigo-300"
+                      >
+                        <Sparkles className="w-3 h-3" /> Explain
+                      </button>
                     </div>
                   )}
                 </div>
+              )}
+              {/* Add explainer button for MCQ too if submitted */}
+              {submitted && q.type === 'mcq' && (
+                 <div className="mt-4 flex justify-end">
+                    <button 
+                        onClick={() => handleExplain(q)}
+                        className="text-xs flex items-center gap-1 px-3 py-1 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 rounded-full transition-colors"
+                      >
+                        <Sparkles className="w-3 h-3" /> View AI Explanation
+                    </button>
+                 </div>
               )}
             </div>
           ))}
@@ -167,6 +209,13 @@ const ExamMode = ({ topic, onComplete }) => {
           )}
         </div>
       )}
+      <AIHelpModal 
+        isOpen={aiOpen}
+        onClose={() => setAiOpen(false)}
+        title={aiTitle}
+        content={aiContent}
+        loading={aiLoading}
+      />
     </div>
   );
 };

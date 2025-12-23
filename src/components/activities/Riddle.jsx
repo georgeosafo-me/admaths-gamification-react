@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { HelpCircle, Lightbulb, Check, X } from 'lucide-react';
-import { generateRiddle } from '../../utils/aiLogic';
+import { HelpCircle, Lightbulb, Check, X, Sparkles } from 'lucide-react';
+import { generateRiddle, generateConceptExplanation } from '../../utils/aiLogic';
 import useMathJax from '../../hooks/useMathJax';
+import AIHelpModal from '../AIHelpModal';
 
 const Riddle = ({ topic, onCorrect }) => {
   const [data, setData] = useState(null);
@@ -10,7 +11,27 @@ const Riddle = ({ topic, onCorrect }) => {
   const [feedback, setFeedback] = useState(null);
   const [showHint, setShowHint] = useState(false);
 
+  // AI Modal
+  const [aiOpen, setAiOpen] = useState(false);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiContent, setAiContent] = useState('');
+
   useMathJax([data]);
+
+  const handleExplain = async () => {
+    setAiOpen(true);
+    setAiLoading(true);
+    try {
+        const resultJson = await generateConceptExplanation(topic, `Explain the logic behind this riddle: "${data.riddle}". Answer is "${data.answer}".`);
+        if (resultJson) {
+            const parsed = JSON.parse(resultJson);
+            setAiContent(parsed.htmlContent);
+        }
+    } catch (e) {
+        setAiContent("Error.");
+    }
+    setAiLoading(false);
+  };
 
   const loadRiddle = async () => {
     setLoading(true);
@@ -72,9 +93,13 @@ const Riddle = ({ topic, onCorrect }) => {
           {showHint && <p className="text-amber-400 italic mb-4 animate-in fade-in">Hint: {data.hint}</p>}
 
           {feedback === 'correct' && (
-            <div className="p-4 bg-emerald-900/30 border border-emerald-500/50 rounded-xl text-emerald-400 font-bold flex items-center justify-center gap-2">
-              <Check className="w-6 h-6" /> Correct! It's {data.answer}.
-              <button onClick={loadRiddle} className="ml-4 text-sm underline">Next Riddle</button>
+            <div className="flex flex-col gap-4">
+              <div className="p-4 bg-emerald-900/30 border border-emerald-500/50 rounded-xl text-emerald-400 font-bold flex items-center justify-center gap-2">
+                <Check className="w-6 h-6" /> Correct! It's {data.answer}.
+              </div>
+              <button onClick={handleExplain} className="text-sm text-indigo-400 flex items-center justify-center gap-2 hover:text-white">
+                 <Sparkles className="w-4 h-4" /> Explain the logic
+              </button>
             </div>
           )}
           {feedback === 'wrong' && (
@@ -84,6 +109,13 @@ const Riddle = ({ topic, onCorrect }) => {
           )}
         </div>
       )}
+      <AIHelpModal 
+        isOpen={aiOpen}
+        onClose={() => setAiOpen(false)}
+        title="Riddle Logic"
+        content={aiContent}
+        loading={aiLoading}
+      />
     </div>
   );
 };
