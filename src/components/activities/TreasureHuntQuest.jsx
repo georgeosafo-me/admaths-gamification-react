@@ -15,32 +15,37 @@ const TreasureHuntQuest = ({ topic, onComplete }) => {
     const [aiModalOpen, setAiModalOpen] = useState(false);
     const [aiResponse, setAiResponse] = useState('');
     const [aiTitle, setAiTitle] = useState('');
-    const [aiLoading, setAiLoading] = useState(false);
-
-    const generateClue = async () => {
-        setLoading(true);
-        const prompt = `
-            Create a "Treasure Hunt" clue for the topic: "${topic}".
-            Step ${step + 1} of 3.
-            The answer should be a number or a simple term.
-            Return JSON:
-            {
-                "location_description": "You are at the old library...",
-                "riddle": "Solve this to find the coordinate of the next key...",
-                "question": "Calculate...",
-                "answer": "..."
-            }
-        `;
-        const result = await callGemini(prompt, true);
-        if (result) {
-            setClue(JSON.parse(result));
-        }
-        setLoading(false);
-    };
+    const [aiLoading, setAiLoading] = useState(false); // Kept if needed for future expansion or shared modal logic
 
     useEffect(() => {
-        generateClue();
-    }, [step, topic]);
+        let mounted = true;
+        const generateClue = async () => {
+            setLoading(true);
+            const prompt = `
+                Create a "Treasure Hunt" clue for the topic: "${topic}".
+                Step ${step + 1} of 3.
+                The answer should be a number or a simple term.
+                Return JSON:
+                {
+                    "location_description": "You are at the old library...",
+                    "riddle": "Solve this to find the coordinate of the next key...",
+                    "question": "Calculate...",
+                    "answer": "..."
+                }
+            `;
+            const result = await callGemini(prompt, true);
+            if (mounted && result) {
+                setClue(JSON.parse(result));
+                setLoading(false);
+            }
+        };
+
+        if (!gameOver) {
+            generateClue();
+        }
+        
+        return () => { mounted = false; };
+    }, [step, topic, gameOver]);
 
     const handleSubmit = () => {
         if (userAnswer.trim().toLowerCase() === clue.answer.toString().toLowerCase()) {
