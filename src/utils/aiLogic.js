@@ -124,6 +124,26 @@ export const generateSpinWheelQuestion = async (topic, amount, count = 1) => {
     return callGemini(prompt, true);
 };
 
+export const generateSpinWheelAllAmounts = async (topic, amounts) => {
+    const prompt = `
+      Generate ONE unique Additional Mathematics question for EACH of the following prize values: ${amounts.join(', ')}.
+      Topic: "${topic}".
+      
+      Difficulty Guide:
+      - Low values (1-5): Easy/Recall.
+      - Medium values (10-50): Medium/Application.
+      - High values (100-200): Hard/Analysis.
+
+      Context: Ghana. Use LaTeX $...$.
+      Return strictly JSON:
+      { "questions": [
+          { "amount": 1, "type": "mcq", "question": "...", "options": [...], "correctAnswer": "...", "explanation": "..." },
+          ...
+      ] }
+    `;
+    return callGemini(prompt, true);
+};
+
 export const generateConceptExplanation = async (topic, concept) => {
     const prompt = `
       Act as a Ghanaian Mathematics Tutor. You are helping a student with the topic: "${topic}".

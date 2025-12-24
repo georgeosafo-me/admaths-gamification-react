@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Loader2, Trophy, X, Sparkles, ArrowRight, AlertTriangle } from 'lucide-react';
-import { generateSpinWheelQuestion, generateConceptExplanation } from '../../utils/aiLogic';
+import { generateSpinWheelAllAmounts, generateSpinWheelQuestion, generateConceptExplanation } from '../../utils/aiLogic';
 import useMathJax from '../../hooks/useMathJax';
 import AIHelpModal from '../AIHelpModal';
 import GhanaFlagPointer from '../GhanaFlagPointer';
@@ -15,9 +15,12 @@ const SpinWheel = ({ topic, onCorrect }) => {
   const [isSpinning, setIsSpinning] = useState(false);
   const [rotation, setRotation] = useState(0);
   
-  // Queue Logic
-  const [queue, setQueue] = useState([]);
-  const [currentIndex, setCurrentIndex] = useState(0);
+  // Cache state: { [amount]: [Question1, Question2, ...] }
+  const [questionCache, setQuestionCache] = useState({});
+  const [initialLoading, setInitialLoading] = useState(false);
+
+  // Active question logic
+  const [activeQuestion, setActiveQuestion] = useState(null);
   const [loading, setLoading] = useState(false);
   
   const [score, setScore] = useState(0);
@@ -25,14 +28,11 @@ const SpinWheel = ({ topic, onCorrect }) => {
   const [feedback, setFeedback] = useState(null);
   const [error, setError] = useState(null);
 
-  const activeQuestion = queue[currentIndex];
-
   // AI Modal State
   const [aiOpen, setAiOpen] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
   const [aiContent, setAiContent] = useState('');
 
-  // Re-run MathJax when question or feedback changes
   useMathJax([activeQuestion, feedback]);
 
   const handleAIExplain = async () => {
@@ -53,17 +53,60 @@ const SpinWheel = ({ topic, onCorrect }) => {
     setAiLoading(false);
   };
 
-  const spin = () => {
+  const populateCache = async () => {
+    setInitialLoading(true);
+    try {
+        const result = await generateSpinWheelAllAmounts(topic, AMOUNTS);
+        if (result) {
+            const parsed = JSON.parse(result);
+            if (parsed.questions) {
+                const newCache = {};
+                parsed.questions.forEach(q => {
+                    const amt = q.amount;
+                    if (!newCache[amt]) newCache[amt] = [];
+                    newCache[amt].push(q);
+                });
+                setQuestionCache(prev => {
+                    // Merge
+                    const merged = { ...prev };
+                    Object.keys(newCache).forEach(k => {
+                        if (!merged[k]) merged[k] = [];
+                        merged[k] = [...merged[k], ...newCache[k]];
+                    });
+                    return merged;
+                });
+            }
+        }
+    } catch (e) {
+        console.error("Failed to pre-fetch questions", e);
+    }
+    setInitialLoading(false);
+  };
+
+  const spin = async () => {
     if (isSpinning) return;
+    
+    // If cache is empty (first spin), try to populate it while spinning
+    // We start animation first
     setIsSpinning(true);
     setFeedback(null);
-    setQueue([]);
-    setCurrentIndex(0);
+    setActiveQuestion(null);
     setError(null);
 
     const spinRot = 1800 + Math.floor(Math.random() * 360);
     const finalRot = rotation + spinRot;
     setRotation(finalRot);
+
+    // If cache is totally empty, trigger population now
+    const isCacheEmpty = Object.keys(questionCache).length === 0;
+    if (isCacheEmpty) {
+       // Fire and forget (or await inside?)
+       // If we await here, the spin might feel janky or delay?
+       // No, JS is single threaded but async/await allows non-blocking.
+       // However, we need the data ready by 4000ms.
+       // Let's fire it.
+       populateCache(); 
+    }
 
     setTimeout(() => {
       setIsSpinning(false);
@@ -73,25 +116,38 @@ const SpinWheel = ({ topic, onCorrect }) => {
       const index = Math.floor(effectiveAngle / segmentAngle);
       const amount = AMOUNTS[index];
       setSelectedAmount(amount);
-      fetchBatch(amount);
+      
+      ensureQuestionAvailable(amount);
     }, 4000);
   };
 
-  const fetchBatch = async (amount) => {
+  const ensureQuestionAvailable = async (amount) => {
     setLoading(true);
     setError(null);
-    
+
+    // Check cache first
+    if (questionCache[amount] && questionCache[amount].length > 0) {
+        // Use cached
+        const q = questionCache[amount][0];
+        // Remove used question from cache
+        setQuestionCache(prev => ({
+            ...prev,
+            [amount]: prev[amount].slice(1)
+        }));
+        setActiveQuestion(q);
+        setLoading(false);
+        return;
+    }
+
+    // Cache empty for this amount, generate ONE new question (just-in-time)
     try {
-        // Fetch 5 questions for this amount
-        const data = await generateSpinWheelQuestion(topic, amount, 5);
+        const data = await generateSpinWheelQuestion(topic, amount, 1);
         if (data) {
             try {
                 const parsed = JSON.parse(data);
-                if (parsed.questions) {
-                    // Map amount to each question as it's constant for this batch
-                    const questions = parsed.questions.map(q => ({...q, amount}));
-                    setQueue(questions);
-                    setCurrentIndex(0);
+                if (parsed.questions && parsed.questions.length > 0) {
+                    const q = parsed.questions[0];
+                    setActiveQuestion({...q, amount});
                 } else {
                     throw new Error("Invalid response format");
                 }
@@ -110,16 +166,10 @@ const SpinWheel = ({ topic, onCorrect }) => {
   };
 
   const handleNext = () => {
+    // For "Next Question" within the same spin (if user wants to continue with this amount)
+    // We treat it as a new fetch/check for this amount
     setFeedback(null);
-    if (currentIndex < queue.length - 1) {
-      setCurrentIndex(prev => prev + 1);
-    } else {
-      // If we run out of questions for this spin, maybe close modal or offer to spin again?
-      // Since it's a "Spin Wheel", forcing a re-spin is natural after the batch is done.
-      // But the user said "seamless transition... generate more".
-      // I'll show "Spin Again" if queue is empty.
-      setQueue([]); // Close modal
-    }
+    ensureQuestionAvailable(selectedAmount);
   };
 
   const handleAnswer = (option) => {
@@ -134,7 +184,7 @@ const SpinWheel = ({ topic, onCorrect }) => {
   };
 
   const closeQuestion = () => {
-    setQueue([]);
+    setActiveQuestion(null);
     setFeedback(null);
     setError(null);
   };
@@ -174,7 +224,7 @@ const SpinWheel = ({ topic, onCorrect }) => {
         {/* CENTER SPIN BUTTON */}
         <button
           onClick={spin}
-          disabled={isSpinning || (queue.length > 0)}
+          disabled={isSpinning || activeQuestion}
           className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-20 h-20 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white rounded-full flex items-center justify-center border-4 border-slate-800 z-10 shadow-xl disabled:opacity-80 disabled:cursor-not-allowed transform hover:scale-105 active:scale-95 transition-all font-bold text-sm text-center leading-tight"
         >
           {isSpinning ? <Loader2 className="animate-spin w-6 h-6" /> : 'SPIN'}
@@ -187,6 +237,7 @@ const SpinWheel = ({ topic, onCorrect }) => {
         <p className="text-xs text-amber-500 font-bold uppercase tracking-widest text-center">Total Earnings</p>
         <p className="text-4xl font-black text-white font-mono tracking-tight">GHS {score}</p>
         <div className="w-full h-1 bg-gradient-to-r from-transparent via-amber-500/50 to-transparent mt-2"></div>
+        {initialLoading && <span className="text-xs text-indigo-400 animate-pulse mt-2">Pre-loading questions...</span>}
       </div>
 
       {/* QUESTION MODAL */}
@@ -207,7 +258,7 @@ const SpinWheel = ({ topic, onCorrect }) => {
                         <button onClick={closeQuestion} className="px-6 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg font-bold">
                             Cancel
                         </button>
-                        <button onClick={() => fetchBatch(selectedAmount)} className="px-6 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-bold">
+                        <button onClick={() => ensureQuestionAvailable(selectedAmount)} className="px-6 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-bold">
                             Try Again
                         </button>
                     </div>
@@ -219,7 +270,7 @@ const SpinWheel = ({ topic, onCorrect }) => {
                         <span className="inline-block px-3 py-1 bg-amber-500/20 text-amber-400 text-xs font-bold rounded-full mb-2">
                            FOR GHS {activeQuestion.amount}
                         </span>
-                        <h3 className="text-xl font-bold text-white">Prize Question {currentIndex + 1}</h3>
+                        <h3 className="text-xl font-bold text-white">Prize Question</h3>
                     </div>
                     {feedback && (
                         <button onClick={closeQuestion} className="p-2 hover:bg-slate-700 rounded-full text-slate-400">
@@ -279,21 +330,18 @@ const SpinWheel = ({ topic, onCorrect }) => {
                              <Sparkles className="w-4 h-4" /> Explain Why
                           </button>
                           
-                          {currentIndex < queue.length - 1 ? (
-                              <button 
-                                onClick={handleNext}
-                                className="px-6 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-bold flex items-center gap-2"
-                              >
-                                 Next Question <ArrowRight className="w-4 h-4" />
-                              </button>
-                          ) : (
-                              <button 
-                                onClick={closeQuestion}
-                                className="px-6 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg font-bold"
-                              >
-                                 Finish & Spin
-                              </button>
-                          )}
+                          <button 
+                            onClick={closeQuestion}
+                            className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg font-bold"
+                          >
+                             Spin Again
+                          </button>
+                          <button 
+                            onClick={handleNext}
+                            className="px-6 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-bold flex items-center gap-2"
+                          >
+                             Next <ArrowRight className="w-4 h-4" />
+                          </button>
                        </div>
                     </div>
                   )}

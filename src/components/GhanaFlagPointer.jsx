@@ -1,18 +1,30 @@
 import React from 'react';
 
 const GhanaFlagPointer = () => {
+  // Adjusted positioning: z-index high, centered horizontally, positioned at the top overlapping the wheel
   return (
-    <div className="relative w-12 h-16 filter drop-shadow-lg z-20 -top-6 left-1/2 -translate-x-1/2">
-      {/* Flag Pole / Structure (Optional, focusing on the pointer shape) */}
+    <div className="absolute -top-8 left-1/2 -translate-x-1/2 z-30 w-16 h-16 drop-shadow-xl pointer-events-none">
       <svg viewBox="0 0 100 100" className="w-full h-full">
-        {/* Red Stripe */}
-        <path d="M10,0 L90,0 L90,30 L10,30 Z" fill="#CE1126" />
-        {/* Yellow Stripe */}
-        <path d="M10,30 L90,30 L90,60 L10,60 Z" fill="#FCD116" />
-        {/* Green Stripe */}
-        <path d="M10,60 L90,60 L50,100 L10,60 Z" fill="#006B3F" />
-        {/* Black Star */}
-        <polygon points="50,35 54,48 67,48 56,56 60,69 50,61 40,69 44,56 33,48 46,48" fill="black" />
+        {/* Shape: An inverted pentagon or triangle pointing down */}
+        <defs>
+          <clipPath id="pointerShape">
+            <path d="M10,0 L90,0 L90,60 L50,95 L10,60 Z" />
+          </clipPath>
+        </defs>
+        
+        <g clipPath="url(#pointerShape)">
+            {/* Red Stripe (Top) */}
+            <rect x="0" y="0" width="100" height="33" fill="#CE1126" />
+            {/* Yellow Stripe (Middle) */}
+            <rect x="0" y="33" width="100" height="33" fill="#FCD116" />
+            {/* Green Stripe (Bottom) */}
+            <rect x="0" y="66" width="100" height="34" fill="#006B3F" />
+            {/* Black Star */}
+            <polygon points="50,38 54,48 65,48 56,55 60,66 50,59 40,66 44,55 35,48 46,48" fill="black" />
+        </g>
+        
+        {/* Outline */}
+        <path d="M10,0 L90,0 L90,60 L50,95 L10,60 Z" fill="none" stroke="white" strokeWidth="2" />
       </svg>
     </div>
   );
