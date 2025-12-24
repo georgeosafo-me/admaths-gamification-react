@@ -44,17 +44,21 @@ const ActivityWrapper = () => {
   // Default mode
   const initialMode = searchParams.get('mode') || 'quest';
   const [activeMode, setActiveMode] = useState(initialMode);
-  const [questType, setQuestType] = useState(null);
 
-  // Sync URL
-  useEffect(() => {
-    setSearchParams({ mode: activeMode });
-  }, [activeMode, setSearchParams]);
+  // Quest Type from URL
+  const questType = searchParams.get('type');
+  const setQuestType = (type) => {
+      setSearchParams({ mode: 'quest', type });
+  };
 
-  // Reset quest type when changing topics or modes
+  // Sync URL for mode (preserve type if mode is quest)
   useEffect(() => {
-    setQuestType(null);
-  }, [subStrandId, activeMode]);
+    if (activeMode === 'quest' && questType) {
+        setSearchParams({ mode: activeMode, type: questType });
+    } else {
+        setSearchParams({ mode: activeMode });
+    }
+  }, [activeMode, setSearchParams]); // questType is in URL, so we don't sync it back here effectively, but we handle mode changes.
 
   const getTopicTitle = (id) => {
     return id.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
