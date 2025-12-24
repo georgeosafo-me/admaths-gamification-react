@@ -124,6 +124,32 @@ export const generateSpinWheelQuestion = async (topic, amount, count = 1) => {
     return callGemini(prompt, true);
 };
 
+export const checkAnswerSimilarity = async (userAnswer, correctAnswer) => {
+    const prompt = `
+      Compare the student's answer: "${userAnswer}"
+      With the correct answer: "${correctAnswer}"
+      
+      Determine if they have the same meaning or if the student's answer is at least 80% similar/correct in the context of a math riddle.
+      Ignore casing and minor typos.
+      
+      Return strictly JSON:
+      {
+        "isCorrect": true/false,
+        "similarity": 0.0 to 1.0,
+        "feedback": "Short feedback on why it is correct or wrong."
+      }
+    `;
+    const result = await callGemini(prompt, true);
+    try {
+        return JSON.parse(result);
+    } catch (e) {
+        console.error("Error parsing similarity check", e);
+        // Fallback to basic check
+        const basicSim = userAnswer.toLowerCase() === correctAnswer.toLowerCase();
+        return { isCorrect: basicSim, similarity: basicSim ? 1.0 : 0.0, feedback: "" };
+    }
+};
+
 export const generateCrossword = async (topic, templateInstructions) => {
     const prompt = `
       You are a puzzle generator. Create a JSON object for a math crossword with THREE distinct difficulty levels.
