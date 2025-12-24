@@ -3,9 +3,12 @@ import { useSearchParams, useNavigate, useParams } from 'react-router-dom';
 import { LayoutGrid, Loader2, ArrowLeft, BookOpen, List, Target, HelpCircle, RefreshCcw, Maximize, XOctagon } from 'lucide-react';
 
 // Import specific activity components
-import CoordinateGeometryQuest from '../quests/geometry-trigonometry/coordinate-geometry/pages/CoordinateGeometryQuest'; 
 import SpinWheel from '../components/activities/SpinWheel';
 import ConceptExplainer from '../components/activities/ConceptExplainer';
+import CrosswordQuest from '../components/activities/CrosswordQuest';
+import MazeQuest from '../components/activities/MazeQuest';
+import TreasureHuntQuest from '../components/activities/TreasureHuntQuest';
+import QuestSelector from '../components/QuestSelector';
 import ExamMode from '../components/activities/ExamMode';
 import Riddle from '../components/activities/Riddle';
 import Rearrange from '../components/activities/Rearrange';
@@ -42,10 +45,20 @@ const ActivityWrapper = () => {
   const initialMode = searchParams.get('mode') || 'quest';
   const [activeMode, setActiveMode] = useState(initialMode);
 
-  // Sync URL
+  // Quest Type from URL
+  const questType = searchParams.get('type');
+  const setQuestType = (type) => {
+      setSearchParams({ mode: 'quest', type });
+  };
+
+  // Sync URL for mode (preserve type if mode is quest)
   useEffect(() => {
-    setSearchParams({ mode: activeMode });
-  }, [activeMode, setSearchParams]);
+    if (activeMode === 'quest' && questType) {
+        setSearchParams({ mode: activeMode, type: questType });
+    } else {
+        setSearchParams({ mode: activeMode });
+    }
+  }, [activeMode, setSearchParams]); // questType is in URL, so we don't sync it back here effectively, but we handle mode changes.
 
   const getTopicTitle = (id) => {
     return id.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
@@ -65,21 +78,16 @@ const ActivityWrapper = () => {
   const renderContent = () => {
     const topicTitle = getTopicTitle(subStrandId || 'Topic');
 
-    // Special case for our fully implemented Coordinate Geometry module quest
-    if (subStrandId === 'coordinate-geometry' && activeMode === 'quest') {
-        return <CoordinateGeometryQuest onComplete={() => handleProgressUpdate('quest')} />;
-    }
-
     // Generic fallbacks for other topics/activities
     switch (activeMode) {
       case 'quest':
-        return (
-            <div className="flex flex-col items-center justify-center p-12 text-center h-full">
-                <Target className="w-16 h-16 text-slate-600 mb-4" />
-                <h2 className="text-2xl font-bold text-slate-300">Quest Mode</h2>
-                <p className="text-slate-500">Coordinate Geometry is the only fully implemented Quest right now.</p>
-            </div>
-        );
+        if (!questType) {
+            return <QuestSelector onSelect={setQuestType} />;
+        }
+        if (questType === 'crossword') return <CrosswordQuest topic={topicTitle} onComplete={() => handleProgressUpdate('quest')} />;
+        if (questType === 'maze') return <MazeQuest topic={topicTitle} onComplete={() => handleProgressUpdate('quest')} />;
+        if (questType === 'treasure') return <TreasureHuntQuest topic={topicTitle} onComplete={() => handleProgressUpdate('quest')} />;
+        return <QuestSelector onSelect={setQuestType} />;
       case 'spin-wheel':
         return <SpinWheel topic={topicTitle} onCorrect={() => handleProgressUpdate('spin')} />;
       case 'concept-explainer':

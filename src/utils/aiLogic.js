@@ -124,6 +124,46 @@ export const generateSpinWheelQuestion = async (topic, amount, count = 1) => {
     return callGemini(prompt, true);
 };
 
+export const generateCrossword = async (topic, templateInstructions) => {
+    const prompt = `
+      You are a puzzle generator. Create a JSON object for a math crossword with THREE distinct difficulty levels.
+      Each level must be a valid, interlocking puzzle that fits the EXACT same grid structure below.
+
+      GRID STRUCTURE:
+      ${templateInstructions}
+
+      TOPIC: ${topic}.
+
+      REQUIREMENTS:
+      1. "easy": DoK Level 1. Direct application of formulas. Simple integer answers.
+      2. "medium": DoK Level 2. Multi-step or working backwards.
+      3. "hard": DoK Level 3. Strategic thinking, combining concepts.
+
+      CRITICAL: The answers (and thus the "solution" object) MUST BE DIFFERENT for each level, but must always fit the digit slots.
+
+      RETURN JSON with this exact structure:
+      {
+        "easy": {
+          "solution": { "0-2": "digit", ... },
+          "clues": { "across": [...], "down": [...] }
+        },
+        "medium": {
+          "solution": { "0-2": "digit", ... },
+          "clues": { "across": [...], "down": [...] }
+        },
+        "hard": {
+           "solution": { "0-2": "digit", ... },
+           "clues": { "across": [...], "down": [...] }
+        }
+      }
+      
+      For Clues: Use "text" for the question (with $math$) and "question" for the concept title.
+      Use LaTeX $...$ for all math notation.
+    `;
+
+    return callGemini(prompt, true);
+};
+
 export const generateSpinWheelAllAmounts = async (topic, amounts) => {
     const prompt = `
       Generate ONE unique Additional Mathematics question for EACH of the following prize values: ${amounts.join(', ')}.
