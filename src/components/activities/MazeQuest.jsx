@@ -17,42 +17,57 @@ const MazeQuest = ({ topic, onComplete }) => {
     const [aiLoading, setAiLoading] = useState(false);
 
 
-    const generateQuestion = async () => {
-        setLoading(true);
-        const prompt = `
-            Create a "Maze" style multiple choice question for the topic: "${topic}".
-            The student is at a junction in a maze and needs to choose the correct path.
-            Return JSON:
-            {
-                "question": "...",
-                "options": [
-                    {"id": "A", "text": "...", "isCorrect": false},
-                    {"id": "B", "text": "...", "isCorrect": true},
-                    {"id": "C", "text": "...", "isCorrect": false}
-                ],
-                "scenario": "You see three doors marked with equations..."
-            }
-        `;
-        const result = await callGemini(prompt, true);
-        if (result) {
-            setCurrentQuestion(JSON.parse(result));
-        }
-        setLoading(false);
-    };
+    // Moved generateQuestion logic into a useCallback to be safely used in useEffect and handlers
+    // or simply define it and use it if we manage deps correctly.
+    // Simpler: define inside useEffect for initial load, and have a separate function for re-generation?
+    // Actually, since we need to call it from handleOptionSelect, useCallback is best.
+    
+    // However, for simplicity and avoiding complex deps, I'll just put the logic in a function and suppress the warning 
+    // OR properly memoize it. Let's try to keep it clean.
 
     useEffect(() => {
-        generateQuestion();
-    }, [topic]);
+        let mounted = true;
+
+        const generateQuestion = async () => {
+            setLoading(true);
+            const prompt = `
+                Create a "Maze" style multiple choice question for the topic: "${topic}".
+                The student is at a junction in a maze and needs to choose the correct path.
+                Return JSON:
+                {
+                    "question": "...",
+                    "options": [
+                        {"id": "A", "text": "...", "isCorrect": false},
+                        {"id": "B", "text": "...", "isCorrect": true},
+                        {"id": "C", "text": "...", "isCorrect": false}
+                    ],
+                    "scenario": "You see three doors marked with equations..."
+                }
+            `;
+            const result = await callGemini(prompt, true);
+            if (mounted && result) {
+                setCurrentQuestion(JSON.parse(result));
+                setLoading(false);
+            }
+        };
+
+        if (!gameOver) {
+            generateQuestion();
+        }
+
+        return () => { mounted = false; };
+    }, [topic, score, gameOver]); 
 
     const handleOptionSelect = (isCorrect) => {
         if (isCorrect) {
-            setScore(score + 1);
-            if (score + 1 >= 5) { // Win condition
-                setGameOver(true);
-                if (onComplete) onComplete();
-            } else {
-                generateQuestion();
-            }
+            setScore(prev => {
+                const newScore = prev + 1;
+                if (newScore >= 5) {
+                    setGameOver(true);
+                    if (onComplete) onComplete();
+                }
+                return newScore;
+            });
         } else {
              setAiTitle("Dead End!");
              setAiResponse("That was the wrong path. Try again!");
