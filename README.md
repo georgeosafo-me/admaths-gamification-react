@@ -1,4 +1,4 @@
-# AdMath Gamification React
+# AdMaths Learning React Project
 
 A scalable gamified learning platform for SHS Additional Mathematics, structured according to the **GES New Curriculum**. This project uses React (Vite) and Tailwind CSS to create interactive "Quests" for each sub-strand of the curriculum.
 
@@ -75,3 +75,8 @@ The project uses Google Gemini for:
 This project is configured for **GitHub Pages**.
 Pushing to the `master` or `main` branch will trigger a GitHub Action to build and deploy the site to:
 `https://georgeosafo-me.github.io/admaths-gamification-react/`
+
+
+## License
+No license is currently applied.
+All rights reserved.
