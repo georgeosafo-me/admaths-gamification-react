@@ -74,7 +74,7 @@ const Riddle = ({ topic, onCorrect }) => {
             const parsed = JSON.parse(resultJson);
             setAiContent(parsed.htmlContent);
         }
-    } catch (e) {
+    } catch (_e) {
         setAiContent("Error.");
     }
     setAiLoading(false);
