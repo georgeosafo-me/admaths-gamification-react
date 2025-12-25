@@ -50,7 +50,6 @@ const ExamMode = ({ topic, onComplete }) => {
     setAiOpen(true);
     setAiLoading(true);
     try {
-        let correctText = question.correctAnswer;
         // If structured, format correctAnswer if it's an object? 
         // Or assume AI returns simple string for simple questions.
         // For structured questions, we might need to handle it.
@@ -62,7 +61,7 @@ const ExamMode = ({ topic, onComplete }) => {
         } else {
             setAiContent("No explanation available.");
         }
-    } catch (e) {
+    } catch (_e) {
         setAiContent("Error loading explanation.");
     }
     setAiLoading(false);
