@@ -221,6 +221,10 @@ export const generateConceptExplanation = async (topic, concept) => {
       3. If it is RELATED, provide a clear explanation using Scaffolding and LaTeX $...$.
       4. Suggest 3 other areas/sub-topics under this topic that can be explored.
       5. If a diagram is helpful, provide valid SVG code.
+      6. Include a "scaffolding" object with:
+         - "analogy": A simple layman's explanation.
+         - "activity": An interactive mini-step. Provide "steps" (list of strings showing what AI does first) and "question" (what user should do next) and "answer" (short correct answer).
+      7. Include "recommendations": A list of 2 suggested activity IDs (from: 'quest', 'spin-wheel', 'riddle', 'rearrange', 'error-correction', 'hotspot', 'exam-mode') to build further intuition. Also provide a "reason" for each recommendation.
 
       Return strictly JSON:
       {
@@ -228,7 +232,19 @@ export const generateConceptExplanation = async (topic, concept) => {
         "message": "Only set this if related is false. Suggest searching for something relevant to ${topic}.",
         "htmlContent": "<p>Basic HTML content with $math$...</p>",
         "svg": "<svg ...>...</svg>" (optional, null if not needed),
-        "suggestions": ["Subtopic 1", "Subtopic 2", "Subtopic 3"]
+        "suggestions": ["Subtopic 1", "Subtopic 2", "Subtopic 3"],
+        "scaffolding": {
+            "analogy": "...",
+            "activity": {
+                "steps": ["Step 1...", "Step 2..."],
+                "question": "...",
+                "answer": "..."
+            }
+        },
+        "recommendations": [
+            { "id": "quest", "label": "Quest", "reason": "..." },
+            { "id": "riddle", "label": "Riddle", "reason": "..." }
+        ]
       }
     `;
     return callGemini(prompt, true);
