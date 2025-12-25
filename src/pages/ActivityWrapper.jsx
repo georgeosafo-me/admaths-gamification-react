@@ -95,7 +95,7 @@ const ActivityWrapper = () => {
         // but user said "when a person answers...". 
         // Tutor is exploration. Maybe no reward there? 
         // Or maybe just progress update. Let's keep reward for "correct" answers/completion.
-        return <ConceptExplainer topic={topicTitle} topicId={subStrandId} onExplain={() => updateProgress('tutor')} />;
+        return <ConceptExplainer topic={topicTitle} topicId={subStrandId} onExplain={() => updateProgress('tutor')} onSwitchActivity={setActiveMode} />;
       case 'exam-mode':
         return <ExamMode topic={topicTitle} onComplete={() => handleProgressUpdate('exam')} />;
       case 'riddle':
