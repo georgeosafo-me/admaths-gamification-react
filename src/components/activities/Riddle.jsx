@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { HelpCircle, Lightbulb, Check, X, Sparkles } from 'lucide-react';
-import { generateRiddle, generateConceptExplanation } from '../../utils/aiLogic';
+import { generateRiddle, generateConceptExplanation, checkAnswerSimilarity } from '../../utils/aiLogic';
 import useMathJax from '../../hooks/useMathJax';
 import AIHelpModal from '../AIHelpModal';
+import { Loader2 } from 'lucide-react';
 
 const Riddle = ({ topic, onCorrect }) => {
   const [queue, setQueue] = useState([]);
@@ -11,7 +12,10 @@ const Riddle = ({ topic, onCorrect }) => {
   
   const [answer, setAnswer] = useState('');
   const [feedback, setFeedback] = useState(null);
+  const [feedbackMessage, setFeedbackMessage] = useState('');
   const [showHint, setShowHint] = useState(false);
+  const [attempts, setAttempts] = useState(0);
+  const [checking, setChecking] = useState(false);
 
   // AI Modal
   const [aiOpen, setAiOpen] = useState(false);
@@ -48,6 +52,8 @@ const Riddle = ({ topic, onCorrect }) => {
     setFeedback(null);
     setAnswer('');
     setShowHint(false);
+    setAttempts(0);
+    setFeedbackMessage('');
     
     if (currentIndex < queue.length - 1) {
       setCurrentIndex(prev => prev + 1);
@@ -74,14 +80,29 @@ const Riddle = ({ topic, onCorrect }) => {
     setAiLoading(false);
   };
 
-  const checkAnswer = () => {
-    if (!data) return;
-    if (answer.toLowerCase().includes(data.answer.toLowerCase())) {
+  const checkAnswer = async () => {
+    if (!data || checking) return;
+    setChecking(true);
+
+    const result = await checkAnswerSimilarity(answer, data.answer);
+    
+    if (result.isCorrect) {
       setFeedback('correct');
+      setFeedbackMessage(result.feedback || `Correct! The answer is indeed ${data.answer}.`);
       if (onCorrect) onCorrect();
     } else {
-      setFeedback('wrong');
+      const newAttempts = attempts + 1;
+      setAttempts(newAttempts);
+      
+      if (newAttempts >= 3) {
+          setFeedback('failed');
+          setFeedbackMessage(`The correct answer was: "${data.answer}". Keep exercising your brain!`);
+      } else {
+          setFeedback('wrong');
+          setFeedbackMessage(result.feedback || "Not quite. Try again!");
+      }
     }
+    setChecking(false);
   };
 
   return (
@@ -119,30 +140,58 @@ const Riddle = ({ topic, onCorrect }) => {
           </div>
 
           <div className="flex gap-4 justify-center mb-6">
-            <button onClick={checkAnswer} className="px-6 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-bold">Check</button>
+            <button 
+                onClick={checkAnswer} 
+                disabled={feedback === 'correct' || feedback === 'failed' || checking}
+                className="px-6 py-2 bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-700 disabled:cursor-not-allowed text-white rounded-lg font-bold flex items-center gap-2"
+            >
+                {checking && <Loader2 className="w-4 h-4 animate-spin" />}
+                Check
+            </button>
             <button onClick={() => setShowHint(true)} className="px-6 py-2 bg-slate-700 hover:bg-slate-600 text-slate-300 rounded-lg font-medium flex items-center gap-2">
               <Lightbulb className="w-4 h-4" /> Hint
             </button>
-            <button onClick={handleNext} className="px-6 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg font-bold transition-colors">
-              Next Riddle
-            </button>
+            {(feedback === 'correct' || feedback === 'failed') && (
+                <button onClick={handleNext} className="px-6 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg font-bold transition-colors">
+                Next Riddle
+                </button>
+            )}
           </div>
 
           {showHint && <p className="text-amber-400 italic mb-4 animate-in fade-in">Hint: {data.hint}</p>}
 
           {feedback === 'correct' && (
-            <div className="flex flex-col gap-4">
-              <div className="p-4 bg-emerald-900/30 border border-emerald-500/50 rounded-xl text-emerald-400 font-bold flex items-center justify-center gap-2">
-                <Check className="w-6 h-6" /> Correct! It's {data.answer}.
+            <div className="flex flex-col gap-4 animate-in fade-in zoom-in duration-300">
+              <div className="p-4 bg-emerald-900/30 border border-emerald-500/50 rounded-xl text-emerald-400 font-bold flex flex-col items-center justify-center gap-2">
+                <div className="flex items-center gap-2">
+                    <Check className="w-6 h-6" /> Success!
+                </div>
+                <p className="text-white text-sm font-normal">{feedbackMessage}</p>
               </div>
               <button onClick={handleExplain} className="text-sm text-indigo-400 flex items-center justify-center gap-2 hover:text-white">
                  <Sparkles className="w-4 h-4" /> Explain the logic
               </button>
             </div>
           )}
+          
+          {feedback === 'failed' && (
+            <div className="flex flex-col gap-4 animate-in fade-in duration-300">
+                <div className="p-4 bg-slate-700/50 border border-slate-600 rounded-xl text-slate-300 font-bold flex flex-col items-center justify-center gap-2">
+                    <p className="text-rose-400">Out of attempts.</p>
+                    <p className="text-white text-sm font-normal">{feedbackMessage}</p>
+                </div>
+                <button onClick={handleExplain} className="text-sm text-indigo-400 flex items-center justify-center gap-2 hover:text-white">
+                    <Sparkles className="w-4 h-4" /> Explain the logic
+                </button>
+            </div>
+          )}
+
           {feedback === 'wrong' && (
-            <div className="p-4 bg-rose-900/30 border border-rose-500/50 rounded-xl text-rose-400 font-bold flex items-center justify-center gap-2">
-              <X className="w-6 h-6" /> Not quite. Try again!
+            <div className="p-4 bg-rose-900/30 border border-rose-500/50 rounded-xl text-rose-400 font-bold flex flex-col items-center justify-center gap-2">
+              <div className="flex items-center gap-2">
+                  <X className="w-6 h-6" /> Attempt {attempts}/3
+              </div>
+              <p className="text-white text-sm font-normal">{feedbackMessage}</p>
             </div>
           )}
         </div>
